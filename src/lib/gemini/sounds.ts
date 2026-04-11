@@ -22,10 +22,6 @@ async function generateAudioClip(prompt: string): Promise<Buffer> {
   throw new Error("No audio data in Lyria 3 response");
 }
 
-export async function generateBackgroundMusic(prompt: string): Promise<Buffer> {
-  return generateAudioClip(prompt);
-}
-
 export async function generateAmbientSound(prompt: string): Promise<Buffer> {
   return generateAudioClip(prompt);
 }
@@ -41,7 +37,6 @@ export interface SoundEffect {
 }
 
 export interface SoundDesign {
-  musicPrompt: string;
   ambientPrompt: string;
   effects: SoundEffect[];
 }
@@ -61,7 +56,6 @@ export function parseSoundDesign(ttsScript: string): SoundDesign | null {
     : "";
   const storyLength = storyText.length;
 
-  const musicMatch = soundSection.match(/מוזיקת רקע:\s*(.+)/);
   const ambientMatch = soundSection.match(/אווירה:\s*(.+)/);
 
   const effectsRegex = /\*\s*\[(.+?)\]\s*-\s*(.+)/g;
@@ -71,8 +65,7 @@ export function parseSoundDesign(ttsScript: string): SoundDesign | null {
     const label = match[1].trim();
     const prompt = match[2].trim();
 
-    // Find label text position in story to calculate timing ratio
-    let position = 0.5; // default to middle if not found
+    let position = 0.5;
     if (storyLength > 0) {
       const labelIdx = storyText.indexOf(label);
       if (labelIdx !== -1) {
@@ -84,8 +77,7 @@ export function parseSoundDesign(ttsScript: string): SoundDesign | null {
   }
 
   return {
-    musicPrompt: musicMatch?.[1]?.trim() || "Gentle bedtime lullaby, soft piano, 70 BPM, instrumental only, calm and soothing",
-    ambientPrompt: ambientMatch?.[1]?.trim() || "Peaceful nighttime sounds, gentle crickets, soft breeze",
+    ambientPrompt: ambientMatch?.[1]?.trim() || "Peaceful nighttime sounds with gentle lullaby music, soft piano, crickets, soft breeze",
     effects,
   };
 }

@@ -5,7 +5,7 @@ Your task: Take the children's story and produce a TTS-ready prompt. The output 
 IMPORTANT RULES:
 - This is a SINGLE speaker narration - one voice tells the entire story
 - ALL output must be in HEBREW - including all directions, cues, and instructions to the TTS
-- For character dialogue, use inline style cues in Hebrew so the narrator changes her manner of speaking - like a grandmother doing character impressions
+- For character dialogue, use inline style cues in Hebrew so the narrator changes manner of speaking - like doing character impressions
 - Put style cues BEFORE each dialogue line
 - The Director's Notes must reference SPECIFIC moments from THIS story
 - Preserve any nikud (ניקוד) from the story text exactly as-is
@@ -13,7 +13,7 @@ IMPORTANT RULES:
 
 Produce this structure:
 
-ספרי את סיפור השינה הזה בעברית. עקבי אחרי הניקוד בקפידה להגייה נכונה.
+יש לספר את סיפור השינה הזה בעברית. יש לעקוב אחרי הניקוד בקפידה להגייה נכונה.
 
 ## הנחיות ביצוע
 
@@ -32,9 +32,9 @@ Produce this structure:
 * [המשפטים האחרונים] - רך מאוד ואיטי, קצב של שיר ערש
 
 חיקויי קולות דמויות:
-* לכל דמות בסיפור, תארי איך הסבתא צריכה לשנות את קולה
+* לכל דמות בסיפור, יש לתאר איך לשנות את הקול
 * [שם הדמות] - [תיאור חיקוי הקול, למשל: "עמוק ואיטי, כמו חיקוי של גבר גדול וחזק", "גבוה ומהיר, כמו ילד קטן נרגש", "זקן ורועד, כמו זקן חכם"]
-* השינויים צריכים להיות ברורים ומשעשעים - כמו סבתא שעושה חיקויים מצחיקים לנכד שלה
+* השינויים צריכים להיות ברורים ומשעשעים - כמו חיקויים מצחיקים לילדים
 
 סגנון:
 * קול חם ועוטף עם "חיוך קולי"
@@ -50,7 +50,7 @@ Produce this structure:
 
 ## הסיפור
 
-[הטקסט המלא של הסיפור בעברית. לפני כל שורת דיאלוג, הוסיפי רמז קצר בסוגריים שמתאר איך לשנות את הקול. דוגמת פורמט:]
+[הטקסט המלא של הסיפור בעברית. לפני כל שורת דיאלוג, יש להוסיף רמז קצר בסוגריים שמתאר איך לשנות את הקול. דוגמת פורמט:]
 
 פַּעַם, לִפְנֵי הַרְבֵּה שָׁנִים...
 (לעבור לקול עמוק ורועם)
@@ -64,13 +64,15 @@ Produce this structure:
 
 ### עיצוב סאונד
 
-מוזיקת רקע: [תיאור קצר באנגלית למוזיקת רקע מתאימה לסיפור, למשל: "Gentle bedtime lullaby, soft piano and strings, 70 BPM, G major, instrumental only, calm and soothing, no vocals"]
-אווירה: [תיאור קצר באנגלית לצלילי אווירה מתאימים, למשל: "Nighttime countryside sounds, gentle crickets, soft breeze, peaceful, no music"]
+אווירה: [תיאור באנגלית לצלילי אווירה ומוזיקת רקע מתאימים, כולל מוזיקה עדינה ורכה שמתאימה לסיפור. למשל: "Gentle bedtime lullaby with soft piano, nighttime countryside sounds, crickets, soft breeze, calm and peaceful atmosphere, instrumental only, no vocals"]
 אפקטים (הציטוט חייב להיות מילים שמופיעות בדיוק בטקסט הסיפור למעלה, כדי שנוכל למקם את האפקט בזמן הנכון):
-* [ציטוט מדויק מהסיפור] - [תיאור אפקט באנגלית, למשל: "Gentle wooden door creak, short single sound"]
-* [ציטוט מדויק מהסיפור] - [תיאור אפקט באנגלית]
-* [ציטוט מדויק מהסיפור] - [תיאור אפקט באנגלית]
+* [ציטוט מדויק מהסיפור] - [תיאור אפקט קצר באנגלית, למשל: "Gentle wooden door creak, short single sound"]
+* [ציטוט מדויק מהסיפור] - [תיאור אפקט קצר באנגלית]
+* [ציטוט מדויק מהסיפור] - [תיאור אפקט קצר באנגלית]
+* [ציטוט מדויק מהסיפור] - [תיאור אפקט קצר באנגלית]
+* [ציטוט מדויק מהסיפור] - [תיאור אפקט קצר באנגלית]
+* [ציטוט מדויק מהסיפור] - [תיאור אפקט קצר באנגלית]
 
-הערה: תיאורי הסאונד חייבים להיות באנגלית כי הם מוזנים למודל יצירת מוזיקה. בחרי 2-4 אפקטים שמתאימים לרגעים מרכזיים בסיפור. הציטוט בסוגריים חייב להיות מילים שמופיעות ממש בסיפור למעלה.
+הערה: תיאורי הסאונד חייבים להיות באנגלית כי הם מוזנים למודל יצירת מוזיקה. יש לבחור 5-8 אפקטים מפוזרים לאורך הסיפור. הציטוט בסוגריים חייב להיות מילים שמופיעות ממש בסיפור למעלה - מילה אחת עד שלוש מילים מדויקות מהטקסט.
 
 Transform the following children's story:`;

@@ -10,40 +10,35 @@ export interface SoundEffectData {
 
 interface AudioPlayerProps {
   audioUrl: string | null;
-  musicUrl: string | null;
   ambientUrl: string | null;
   effects: SoundEffectData[];
   isLoading: boolean;
 }
 
+const FADEOUT_DURATION = 4; // seconds
+
 export function AudioPlayer({
   audioUrl,
-  musicUrl,
   ambientUrl,
   effects,
   isLoading,
 }: AudioPlayerProps) {
   const narrationRef = useRef<HTMLAudioElement>(null);
-  const musicRef = useRef<HTMLAudioElement>(null);
   const ambientRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [musicVolume, setMusicVolume] = useState(0.15);
-  const [ambientVolume, setAmbientVolume] = useState(0.1);
+  const [ambientVolume, setAmbientVolume] = useState(0.15);
   const [isMixing, setIsMixing] = useState(false);
   const effectTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const playedEffectsRef = useRef<Set<number>>(new Set());
+  const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
   }, [audioUrl]);
-
-  useEffect(() => {
-    if (musicRef.current) musicRef.current.volume = musicVolume;
-  }, [musicVolume]);
 
   useEffect(() => {
     if (ambientRef.current) ambientRef.current.volume = ambientVolume;
@@ -56,7 +51,6 @@ export function AudioPlayer({
   }
 
   function scheduleEffects() {
-    // Clear any existing scheduled effects
     effectTimeoutsRef.current.forEach(clearTimeout);
     effectTimeoutsRef.current = [];
     playedEffectsRef.current.clear();
@@ -88,20 +82,42 @@ export function AudioPlayer({
     effectTimeoutsRef.current = [];
   }
 
+  function fadeOutAmbient() {
+    if (!ambientRef.current) return;
+    const startVolume = ambientRef.current.volume;
+    const steps = 20;
+    const stepDuration = (FADEOUT_DURATION * 1000) / steps;
+    let step = 0;
+
+    fadeIntervalRef.current = setInterval(() => {
+      step++;
+      if (!ambientRef.current || step >= steps) {
+        if (ambientRef.current) {
+          ambientRef.current.pause();
+          ambientRef.current.volume = ambientVolume;
+        }
+        if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+        return;
+      }
+      ambientRef.current.volume = startVolume * (1 - step / steps);
+    }, stepDuration);
+  }
+
   function togglePlay() {
     if (!narrationRef.current) return;
+    if (fadeIntervalRef.current) {
+      clearInterval(fadeIntervalRef.current);
+      fadeIntervalRef.current = null;
+    }
+
     if (isPlaying) {
       narrationRef.current.pause();
-      musicRef.current?.pause();
       ambientRef.current?.pause();
       clearScheduledEffects();
     } else {
       narrationRef.current.play();
-      if (musicRef.current) {
-        musicRef.current.currentTime = 0;
-        musicRef.current.play();
-      }
       if (ambientRef.current) {
+        ambientRef.current.volume = ambientVolume;
         ambientRef.current.currentTime = 0;
         ambientRef.current.play();
       }
@@ -120,8 +136,10 @@ export function AudioPlayer({
 
   function handleNarrationEnded() {
     setIsPlaying(false);
-    musicRef.current?.pause();
-    ambientRef.current?.pause();
+    clearScheduledEffects();
+    if (ambientRef.current) {
+      fadeOutAmbient();
+    }
   }
 
   const handleDownload = useCallback(async () => {
@@ -131,7 +149,6 @@ export function AudioPlayer({
     try {
       const audioContext = new OfflineAudioContext(1, 1, 24000);
 
-      // Load narration
       const narrationResponse = await fetch(audioUrl);
       const narrationArrayBuffer = await narrationResponse.arrayBuffer();
       const narrationBuffer =
@@ -139,7 +156,10 @@ export function AudioPlayer({
 
       const totalLength = narrationBuffer.length;
       const sampleRate = narrationBuffer.sampleRate;
-      const offlineCtx = new OfflineAudioContext(1, totalLength, sampleRate);
+      const totalDuration = totalLength / sampleRate;
+      // Add fadeout duration to total
+      const extendedLength = totalLength + FADEOUT_DURATION * sampleRate;
+      const offlineCtx = new OfflineAudioContext(1, extendedLength, sampleRate);
 
       // Narration at full volume
       const narrationSource = offlineCtx.createBufferSource();
@@ -154,45 +174,35 @@ export function AudioPlayer({
         try {
           const effectResponse = await fetch(effect.audioUrl);
           const effectArrayBuffer = await effectResponse.arrayBuffer();
-          const effectBuffer = await offlineCtx.decodeAudioData(effectArrayBuffer);
+          const effectBuffer =
+            await offlineCtx.decodeAudioData(effectArrayBuffer);
           const effectSource = offlineCtx.createBufferSource();
           effectSource.buffer = effectBuffer;
           const effectGain = offlineCtx.createGain();
           effectGain.gain.value = 0.3;
           effectSource.connect(effectGain).connect(offlineCtx.destination);
-          effectSource.start(effect.position * (totalLength / sampleRate));
+          effectSource.start(effect.position * totalDuration);
         } catch {
-          // Skip effect if it fails to decode
+          // Skip effect if it fails
         }
       }
 
-      // Music loop at low volume
-      if (musicUrl) {
-        const musicResponse = await fetch(musicUrl);
-        const musicArrayBuffer = await musicResponse.arrayBuffer();
-        const musicBuffer = await offlineCtx.decodeAudioData(musicArrayBuffer);
-        const musicGain = offlineCtx.createGain();
-        musicGain.gain.value = musicVolume;
-
-        const loopCount = Math.ceil(totalLength / musicBuffer.length);
-        for (let i = 0; i < loopCount; i++) {
-          const source = offlineCtx.createBufferSource();
-          source.buffer = musicBuffer;
-          source.connect(musicGain).connect(offlineCtx.destination);
-          source.start((i * musicBuffer.length) / sampleRate);
-        }
-      }
-
-      // Ambient loop at low volume
+      // Ambient loop with fadeout after narration ends
       if (ambientUrl) {
         const ambientResponse = await fetch(ambientUrl);
         const ambientArrayBuffer = await ambientResponse.arrayBuffer();
         const ambientBuffer =
           await offlineCtx.decodeAudioData(ambientArrayBuffer);
         const ambientGain = offlineCtx.createGain();
-        ambientGain.gain.value = ambientVolume;
+        ambientGain.gain.setValueAtTime(ambientVolume, 0);
+        // Fadeout starting when narration ends
+        ambientGain.gain.setValueAtTime(ambientVolume, totalDuration);
+        ambientGain.gain.linearRampToValueAtTime(
+          0,
+          totalDuration + FADEOUT_DURATION
+        );
 
-        const loopCount = Math.ceil(totalLength / ambientBuffer.length);
+        const loopCount = Math.ceil(extendedLength / ambientBuffer.length);
         for (let i = 0; i < loopCount; i++) {
           const source = offlineCtx.createBufferSource();
           source.buffer = ambientBuffer;
@@ -203,7 +213,6 @@ export function AudioPlayer({
 
       const rendered = await offlineCtx.startRendering();
 
-      // Convert to WAV
       const wavData = audioBufferToWav(rendered);
       const blob = new Blob([wavData], { type: "audio/wav" });
       const url = URL.createObjectURL(blob);
@@ -214,7 +223,6 @@ export function AudioPlayer({
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Mix download error:", err);
-      // Fallback: download narration only
       const a = document.createElement("a");
       a.href = audioUrl;
       a.download = "bedtime-story.wav";
@@ -222,7 +230,7 @@ export function AudioPlayer({
     } finally {
       setIsMixing(false);
     }
-  }, [audioUrl, musicUrl, ambientUrl, musicVolume, ambientVolume]);
+  }, [audioUrl, ambientUrl, ambientVolume, effects]);
 
   if (isLoading) {
     return (
@@ -266,12 +274,7 @@ export function AudioPlayer({
         }
         onEnded={handleNarrationEnded}
       />
-      {musicUrl && (
-        <audio ref={musicRef} src={musicUrl} loop />
-      )}
-      {ambientUrl && (
-        <audio ref={ambientRef} src={ambientUrl} loop />
-      )}
+      {ambientUrl && <audio ref={ambientRef} src={ambientUrl} loop />}
 
       {/* Main controls */}
       <div className="flex items-center gap-4">
@@ -351,37 +354,19 @@ export function AudioPlayer({
         </button>
       </div>
 
-      {/* Volume controls for music/ambient */}
-      {(musicUrl || ambientUrl) && (
-        <div className="flex flex-wrap gap-4 text-xs text-gray-400">
-          {musicUrl && (
-            <div className="flex items-center gap-2">
-              <span>מוזיקה:</span>
-              <input
-                type="range"
-                min={0}
-                max={0.5}
-                step={0.01}
-                value={musicVolume}
-                onChange={(e) => setMusicVolume(parseFloat(e.target.value))}
-                className="w-20 accent-gold-400 h-1"
-              />
-            </div>
-          )}
-          {ambientUrl && (
-            <div className="flex items-center gap-2">
-              <span>אווירה:</span>
-              <input
-                type="range"
-                min={0}
-                max={0.5}
-                step={0.01}
-                value={ambientVolume}
-                onChange={(e) => setAmbientVolume(parseFloat(e.target.value))}
-                className="w-20 accent-gold-400 h-1"
-              />
-            </div>
-          )}
+      {/* Volume control for ambient */}
+      {ambientUrl && (
+        <div className="flex items-center gap-2 text-xs text-gray-400">
+          <span>אווירה:</span>
+          <input
+            type="range"
+            min={0}
+            max={0.5}
+            step={0.01}
+            value={ambientVolume}
+            onChange={(e) => setAmbientVolume(parseFloat(e.target.value))}
+            className="w-24 accent-gold-400 h-1"
+          />
         </div>
       )}
 
@@ -390,7 +375,10 @@ export function AudioPlayer({
         <div className="text-xs text-gray-500 flex flex-wrap gap-2">
           <span>אפקטים:</span>
           {effects.map((effect, i) => (
-            <span key={i} className="px-2 py-0.5 bg-night-700/50 rounded text-gray-400">
+            <span
+              key={i}
+              className="px-2 py-0.5 bg-night-700/50 rounded text-gray-400"
+            >
               {effect.label} ({formatTime(effect.position * (duration || 0))})
             </span>
           ))}

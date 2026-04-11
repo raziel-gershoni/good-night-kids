@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import {
-  generateBackgroundMusic,
   generateAmbientSound,
   generateSoundEffect,
   parseSoundDesign,
@@ -21,26 +20,19 @@ export async function POST(request: Request) {
     }
 
     console.log("Generating sounds:", {
-      music: soundDesign.musicPrompt.slice(0, 80),
       ambient: soundDesign.ambientPrompt.slice(0, 80),
       effects: soundDesign.effects.length,
     });
 
-    // Generate music and ambient in parallel
-    const [musicBuffer, ambientBuffer] = await Promise.all([
-      generateBackgroundMusic(soundDesign.musicPrompt),
+    // Generate ambient and all effects in parallel
+    const [ambientBuffer, ...effectBuffers] = await Promise.all([
       generateAmbientSound(soundDesign.ambientPrompt),
+      ...soundDesign.effects.slice(0, 8).map((e) => generateSoundEffect(e.prompt)),
     ]);
 
-    // Generate effects in parallel
-    const effectBuffers = await Promise.all(
-      soundDesign.effects.slice(0, 4).map((e) => generateSoundEffect(e.prompt))
-    );
-
     return NextResponse.json({
-      musicBase64: musicBuffer.toString("base64"),
       ambientBase64: ambientBuffer.toString("base64"),
-      effects: soundDesign.effects.slice(0, 4).map((e, i) => ({
+      effects: soundDesign.effects.slice(0, 8).map((e, i) => ({
         label: e.label,
         position: e.position,
         audioBase64: effectBuffers[i].toString("base64"),

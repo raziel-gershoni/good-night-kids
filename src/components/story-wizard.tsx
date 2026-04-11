@@ -24,7 +24,6 @@ export function StoryWizard() {
   const [audioBase64, setAudioBase64] = useState<string | null>(null);
 
   // Sound design
-  const [musicUrl, setMusicUrl] = useState<string | null>(null);
   const [ambientUrl, setAmbientUrl] = useState<string | null>(null);
   const [soundEffects, setSoundEffects] = useState<SoundEffectData[]>([]);
   const [isGeneratingSounds, setIsGeneratingSounds] = useState(false);
@@ -59,8 +58,7 @@ export function StoryWizard() {
       setTtsScript("");
       setAudioUrl(null);
       setAudioBase64(null);
-      setMusicUrl(null);
-      setAmbientUrl(null);
+            setAmbientUrl(null);
       setSoundEffects([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה ביצירת הסיפור");
@@ -102,8 +100,7 @@ export function StoryWizard() {
       setTtsScript(data.ttsScript);
       setAudioUrl(null);
       setAudioBase64(null);
-      setMusicUrl(null);
-      setAmbientUrl(null);
+            setAmbientUrl(null);
       setSoundEffects([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה ביצירת ההנחיות");
@@ -149,12 +146,6 @@ export function StoryWizard() {
       const data = await res.json();
 
       // Convert base64 to blob URLs
-      const musicBlob = new Blob(
-        [Uint8Array.from(atob(data.musicBase64), (c) => c.charCodeAt(0))],
-        { type: data.mimeType }
-      );
-      setMusicUrl(URL.createObjectURL(musicBlob));
-
       const ambientBlob = new Blob(
         [Uint8Array.from(atob(data.ambientBase64), (c) => c.charCodeAt(0))],
         { type: data.mimeType }
@@ -192,8 +183,7 @@ export function StoryWizard() {
     setCurrentSlug(story.slug);
     setModel((story.model as GeminiModel) || "gemini-3.1-flash-lite-preview");
     setThinkingLevel((story.thinkingLevel as ThinkingLevel) || "none");
-    setMusicUrl(null);
-    setAmbientUrl(null);
+        setAmbientUrl(null);
     setSoundEffects([]);
 
     if (story.hasAudio) {
@@ -284,7 +274,7 @@ export function StoryWizard() {
         value=""
         onChange={() => {}}
       >
-        {audioUrl && !musicUrl && (
+        {audioUrl && !ambientUrl && (
           <button
             onClick={generateSounds}
             disabled={isGeneratingSounds}
@@ -301,7 +291,6 @@ export function StoryWizard() {
         )}
         <AudioPlayer
           audioUrl={audioUrl}
-          musicUrl={musicUrl}
           ambientUrl={ambientUrl}
           effects={soundEffects}
           isLoading={isGeneratingAudio}
