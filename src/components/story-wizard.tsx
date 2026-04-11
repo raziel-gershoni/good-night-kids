@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { SettingsBar } from "./settings-bar";
 import { SourceInput } from "./source-input";
 import { StepSection } from "./step-section";
-import { AudioPlayer } from "./audio-player";
+import { AudioPlayer, type SoundEffectData } from "./audio-player";
 import { StoryActions } from "./story-actions";
 import { SavedStoriesList } from "./saved-stories-list";
 import type { GeminiModel, ThinkingLevel, SourceType, SavedStory } from "@/lib/types";
@@ -22,6 +22,12 @@ export function StoryWizard() {
   const [ttsScript, setTtsScript] = useState("");
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioBase64, setAudioBase64] = useState<string | null>(null);
+
+  // Sound design
+  const [musicUrl, setMusicUrl] = useState<string | null>(null);
+  const [ambientUrl, setAmbientUrl] = useState<string | null>(null);
+  const [soundEffects, setSoundEffects] = useState<SoundEffectData[]>([]);
+  const [isGeneratingSounds, setIsGeneratingSounds] = useState(false);
 
   // Loading states
   const [isGeneratingStory, setIsGeneratingStory] = useState(false);
@@ -53,6 +59,9 @@ export function StoryWizard() {
       setTtsScript("");
       setAudioUrl(null);
       setAudioBase64(null);
+      setMusicUrl(null);
+      setAmbientUrl(null);
+      setSoundEffects([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה ביצירת הסיפור");
     } finally {
@@ -93,6 +102,9 @@ export function StoryWizard() {
       setTtsScript(data.ttsScript);
       setAudioUrl(null);
       setAudioBase64(null);
+      setMusicUrl(null);
+      setAmbientUrl(null);
+      setSoundEffects([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה ביצירת ההנחיות");
     } finally {
@@ -124,6 +136,48 @@ export function StoryWizard() {
     }
   }, [ttsScript, voiceName]);
 
+  const generateSounds = useCallback(async () => {
+    clearError();
+    setIsGeneratingSounds(true);
+    try {
+      const res = await fetch("/api/generate/sounds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ttsScript }),
+      });
+      if (!res.ok) throw new Error("Failed to generate sounds");
+      const data = await res.json();
+
+      // Convert base64 to blob URLs
+      const musicBlob = new Blob(
+        [Uint8Array.from(atob(data.musicBase64), (c) => c.charCodeAt(0))],
+        { type: data.mimeType }
+      );
+      setMusicUrl(URL.createObjectURL(musicBlob));
+
+      const ambientBlob = new Blob(
+        [Uint8Array.from(atob(data.ambientBase64), (c) => c.charCodeAt(0))],
+        { type: data.mimeType }
+      );
+      setAmbientUrl(URL.createObjectURL(ambientBlob));
+
+      const effects: SoundEffectData[] = data.effects.map(
+        (e: { label: string; audioBase64: string }) => {
+          const blob = new Blob(
+            [Uint8Array.from(atob(e.audioBase64), (c) => c.charCodeAt(0))],
+            { type: data.mimeType }
+          );
+          return { label: e.label, audioUrl: URL.createObjectURL(blob) };
+        }
+      );
+      setSoundEffects(effects);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "שגיאה ביצירת צלילים");
+    } finally {
+      setIsGeneratingSounds(false);
+    }
+  }, [ttsScript]);
+
   const handleSaved = (id: string, slug: string) => {
     setCurrentStoryId(id);
     setCurrentSlug(slug);
@@ -138,6 +192,9 @@ export function StoryWizard() {
     setCurrentSlug(story.slug);
     setModel((story.model as GeminiModel) || "gemini-3.1-flash-lite-preview");
     setThinkingLevel((story.thinkingLevel as ThinkingLevel) || "none");
+    setMusicUrl(null);
+    setAmbientUrl(null);
+    setSoundEffects([]);
 
     if (story.hasAudio) {
       try {
@@ -219,7 +276,7 @@ export function StoryWizard() {
 
       <StepSection
         stepNumber={3}
-        title="הקראה"
+        title="הקראה וצלילים"
         buttonLabel="הקרא את הסיפור"
         isLoading={isGeneratingAudio}
         isDisabled={!ttsScript.trim()}
@@ -227,7 +284,28 @@ export function StoryWizard() {
         value=""
         onChange={() => {}}
       >
-        <AudioPlayer audioUrl={audioUrl} isLoading={isGeneratingAudio} />
+        {audioUrl && !musicUrl && (
+          <button
+            onClick={generateSounds}
+            disabled={isGeneratingSounds}
+            className="px-4 py-1.5 bg-night-700 hover:bg-night-600 disabled:bg-night-800 disabled:text-gray-600 text-sm text-gray-300 rounded-lg transition-colors flex items-center gap-2 border border-night-600/50"
+          >
+            {isGeneratingSounds && (
+              <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            )}
+            {isGeneratingSounds ? "מייצר צלילים..." : "ייצר מוזיקה ואווירה"}
+          </button>
+        )}
+        <AudioPlayer
+          audioUrl={audioUrl}
+          musicUrl={musicUrl}
+          ambientUrl={ambientUrl}
+          effects={soundEffects}
+          isLoading={isGeneratingAudio}
+        />
       </StepSection>
 
       <StoryActions

@@ -62,4 +62,15 @@ Produce this structure:
 (לחזור לקול הסבתא החם)
 וְכֻלָּם חָיוּ בְּאוֹשֶׁר.
 
+### עיצוב סאונד
+
+מוזיקת רקע: [תיאור קצר באנגלית למוזיקת רקע מתאימה לסיפור, למשל: "Gentle bedtime lullaby, soft piano and strings, 70 BPM, G major, instrumental only, calm and soothing, no vocals"]
+אווירה: [תיאור קצר באנגלית לצלילי אווירה מתאימים, למשל: "Nighttime countryside sounds, gentle crickets, soft breeze, peaceful, no music"]
+אפקטים:
+* [רגע בסיפור] - [תיאור אפקט באנגלית, למשל: "Gentle wooden door creak, short single sound"]
+* [רגע בסיפור] - [תיאור אפקט באנגלית]
+* [רגע בסיפור] - [תיאור אפקט באנגלית]
+
+הערה: תיאורי הסאונד חייבים להיות באנגלית כי הם מוזנים למודל יצירת מוזיקה. בחרי 2-4 אפקטים שמתאימים לרגעים מרכזיים בסיפור.
+
 Transform the following children's story:`;
