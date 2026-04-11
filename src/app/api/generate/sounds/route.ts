@@ -24,11 +24,14 @@ export async function POST(request: Request) {
       effects: soundDesign.effects.length,
     });
 
-    // Generate ambient and all effects in parallel
-    const [ambientBuffer, ...effectBuffers] = await Promise.all([
-      generateAmbientSound(soundDesign.ambientPrompt),
-      ...soundDesign.effects.slice(0, 8).map((e) => generateSoundEffect(e.prompt)),
-    ]);
+    // Generate ambient (Lyria 3) first, then effects sequentially (ElevenLabs rate limit)
+    const ambientBuffer = await generateAmbientSound(soundDesign.ambientPrompt);
+
+    const effectBuffers: Buffer[] = [];
+    for (const e of soundDesign.effects.slice(0, 8)) {
+      const buf = await generateSoundEffect(e.prompt);
+      effectBuffers.push(buf);
+    }
 
     return NextResponse.json({
       ambientBase64: ambientBuffer.toString("base64"),
