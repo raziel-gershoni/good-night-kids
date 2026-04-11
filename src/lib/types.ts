@@ -1,7 +1,7 @@
 export type SourceType = "tanakh" | "gmara" | "zohar" | "midrash" | "other";
 
 export type GeminiModel =
-  | "gemini-3-flash-preview"
+  | "gemini-3.1-flash-lite-preview"
   | "gemini-3.1-pro-preview"
   | "gemini-2.5-flash"
   | "gemini-2.5-pro";
@@ -9,7 +9,7 @@ export type GeminiModel =
 export type ThinkingLevel = "none" | "low" | "medium" | "high";
 
 export const GEMINI_MODELS: { value: GeminiModel; label: string }[] = [
-  { value: "gemini-3-flash-preview", label: "3 Flash (מהיר)" },
+  { value: "gemini-3.1-flash-lite-preview", label: "3.1 Flash Lite (מהיר)" },
   { value: "gemini-3.1-pro-preview", label: "3.1 Pro (מתקדם)" },
   { value: "gemini-2.5-flash", label: "2.5 Flash" },
   { value: "gemini-2.5-pro", label: "2.5 Pro" },
