@@ -55,11 +55,15 @@ export async function narrateStory(params: {
   // Send only the transcript to TTS - the preamble's "Narrator"/"Character"
   // words confuse multi-speaker detection
   const transcript = extractTranscript(params.ttsScript);
-  const ttsPrompt = `Tell this bedtime story in a warm, gentle voice. Speak softly and slowly toward the end.\n\n${transcript}`;
+  const ttsPrompt = `TTS the following bedtime story narrated by Narrator and Character. Speak warmly and gently, slowing down toward the end.\n\n${transcript}`;
+
+  console.log("TTS narrator voice:", narratorVoice);
+  console.log("TTS character voice:", characterVoice);
+  console.log("TTS prompt (first 500 chars):", ttsPrompt.slice(0, 500));
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
-    contents: ttsPrompt,
+    contents: [{ parts: [{ text: ttsPrompt }] }],
     config: {
       responseModalities: ["AUDIO"],
       speechConfig: {
