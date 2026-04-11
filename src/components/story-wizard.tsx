@@ -162,12 +162,12 @@ export function StoryWizard() {
       setAmbientUrl(URL.createObjectURL(ambientBlob));
 
       const effects: SoundEffectData[] = data.effects.map(
-        (e: { label: string; audioBase64: string }) => {
+        (e: { label: string; position: number; audioBase64: string }) => {
           const blob = new Blob(
             [Uint8Array.from(atob(e.audioBase64), (c) => c.charCodeAt(0))],
             { type: data.mimeType }
           );
-          return { label: e.label, audioUrl: URL.createObjectURL(blob) };
+          return { label: e.label, position: e.position, audioUrl: URL.createObjectURL(blob) };
         }
       );
       setSoundEffects(effects);

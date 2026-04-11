@@ -42,6 +42,7 @@ export async function POST(request: Request) {
       ambientBase64: ambientBuffer.toString("base64"),
       effects: soundDesign.effects.slice(0, 4).map((e, i) => ({
         label: e.label,
+        position: e.position,
         audioBase64: effectBuffers[i].toString("base64"),
       })),
       mimeType: "audio/mp3",

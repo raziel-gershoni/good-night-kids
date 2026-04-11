@@ -34,27 +34,53 @@ export async function generateSoundEffect(prompt: string): Promise<Buffer> {
   return generateAudioClip(prompt);
 }
 
+export interface SoundEffect {
+  label: string;
+  prompt: string;
+  position: number; // 0-1 ratio in the story
+}
+
 export interface SoundDesign {
   musicPrompt: string;
   ambientPrompt: string;
-  effects: { label: string; prompt: string }[];
+  effects: SoundEffect[];
 }
 
 export function parseSoundDesign(ttsScript: string): SoundDesign | null {
-  const marker = "### עיצוב סאונד";
-  const idx = ttsScript.indexOf(marker);
-  if (idx === -1) return null;
+  const soundMarker = "### עיצוב סאונד";
+  const soundIdx = ttsScript.indexOf(soundMarker);
+  if (soundIdx === -1) return null;
 
-  const section = ttsScript.slice(idx + marker.length);
+  const soundSection = ttsScript.slice(soundIdx + soundMarker.length);
 
-  const musicMatch = section.match(/מוזיקת רקע:\s*(.+)/);
-  const ambientMatch = section.match(/אווירה:\s*(.+)/);
+  // Extract story text (everything between ## הסיפור and ### עיצוב סאונד)
+  const storyMarker = "## הסיפור";
+  const storyStart = ttsScript.indexOf(storyMarker);
+  const storyText = storyStart !== -1
+    ? ttsScript.slice(storyStart + storyMarker.length, soundIdx).trim()
+    : "";
+  const storyLength = storyText.length;
+
+  const musicMatch = soundSection.match(/מוזיקת רקע:\s*(.+)/);
+  const ambientMatch = soundSection.match(/אווירה:\s*(.+)/);
 
   const effectsRegex = /\*\s*\[(.+?)\]\s*-\s*(.+)/g;
-  const effects: { label: string; prompt: string }[] = [];
+  const effects: SoundEffect[] = [];
   let match;
-  while ((match = effectsRegex.exec(section)) !== null) {
-    effects.push({ label: match[1].trim(), prompt: match[2].trim() });
+  while ((match = effectsRegex.exec(soundSection)) !== null) {
+    const label = match[1].trim();
+    const prompt = match[2].trim();
+
+    // Find label text position in story to calculate timing ratio
+    let position = 0.5; // default to middle if not found
+    if (storyLength > 0) {
+      const labelIdx = storyText.indexOf(label);
+      if (labelIdx !== -1) {
+        position = labelIdx / storyLength;
+      }
+    }
+
+    effects.push({ label, prompt, position });
   }
 
   return {

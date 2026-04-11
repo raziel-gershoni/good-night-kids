@@ -5,6 +5,7 @@ import { useRef, useState, useEffect, useCallback } from "react";
 export interface SoundEffectData {
   label: string;
   audioUrl: string;
+  position: number; // 0-1 ratio in the story
 }
 
 interface AudioPlayerProps {
@@ -31,6 +32,8 @@ export function AudioPlayer({
   const [musicVolume, setMusicVolume] = useState(0.15);
   const [ambientVolume, setAmbientVolume] = useState(0.1);
   const [isMixing, setIsMixing] = useState(false);
+  const effectTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const playedEffectsRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     setIsPlaying(false);
@@ -52,12 +55,46 @@ export function AudioPlayer({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }
 
+  function scheduleEffects() {
+    // Clear any existing scheduled effects
+    effectTimeoutsRef.current.forEach(clearTimeout);
+    effectTimeoutsRef.current = [];
+    playedEffectsRef.current.clear();
+
+    if (!narrationRef.current || !effects.length || !duration) return;
+
+    const currentPos = narrationRef.current.currentTime;
+
+    effects.forEach((effect, i) => {
+      const effectTime = effect.position * duration;
+      const delay = (effectTime - currentPos) * 1000;
+
+      if (delay > 0) {
+        const timeout = setTimeout(() => {
+          if (!playedEffectsRef.current.has(i)) {
+            playedEffectsRef.current.add(i);
+            const audio = new Audio(effect.audioUrl);
+            audio.volume = 0.3;
+            audio.play();
+          }
+        }, delay);
+        effectTimeoutsRef.current.push(timeout);
+      }
+    });
+  }
+
+  function clearScheduledEffects() {
+    effectTimeoutsRef.current.forEach(clearTimeout);
+    effectTimeoutsRef.current = [];
+  }
+
   function togglePlay() {
     if (!narrationRef.current) return;
     if (isPlaying) {
       narrationRef.current.pause();
       musicRef.current?.pause();
       ambientRef.current?.pause();
+      clearScheduledEffects();
     } else {
       narrationRef.current.play();
       if (musicRef.current) {
@@ -68,6 +105,7 @@ export function AudioPlayer({
         ambientRef.current.currentTime = 0;
         ambientRef.current.play();
       }
+      scheduleEffects();
     }
     setIsPlaying(!isPlaying);
   }
@@ -77,18 +115,13 @@ export function AudioPlayer({
     const time = parseFloat(e.target.value);
     narrationRef.current.currentTime = time;
     setCurrentTime(time);
+    if (isPlaying) scheduleEffects();
   }
 
   function handleNarrationEnded() {
     setIsPlaying(false);
     musicRef.current?.pause();
     ambientRef.current?.pause();
-  }
-
-  function playEffect(url: string) {
-    const audio = new Audio(url);
-    audio.volume = 0.3;
-    audio.play();
   }
 
   const handleDownload = useCallback(async () => {
@@ -115,6 +148,23 @@ export function AudioPlayer({
       narrationGain.gain.value = 1.0;
       narrationSource.connect(narrationGain).connect(offlineCtx.destination);
       narrationSource.start(0);
+
+      // Spot effects at their positions
+      for (const effect of effects) {
+        try {
+          const effectResponse = await fetch(effect.audioUrl);
+          const effectArrayBuffer = await effectResponse.arrayBuffer();
+          const effectBuffer = await offlineCtx.decodeAudioData(effectArrayBuffer);
+          const effectSource = offlineCtx.createBufferSource();
+          effectSource.buffer = effectBuffer;
+          const effectGain = offlineCtx.createGain();
+          effectGain.gain.value = 0.3;
+          effectSource.connect(effectGain).connect(offlineCtx.destination);
+          effectSource.start(effect.position * (totalLength / sampleRate));
+        } catch {
+          // Skip effect if it fails to decode
+        }
+      }
 
       // Music loop at low volume
       if (musicUrl) {
@@ -335,17 +385,14 @@ export function AudioPlayer({
         </div>
       )}
 
-      {/* Sound effects buttons */}
+      {/* Sound effects info */}
       {effects.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="text-xs text-gray-500 flex flex-wrap gap-2">
+          <span>אפקטים:</span>
           {effects.map((effect, i) => (
-            <button
-              key={i}
-              onClick={() => playEffect(effect.audioUrl)}
-              className="px-3 py-1 bg-night-700 hover:bg-night-600 text-gray-300 text-xs rounded-lg transition-colors border border-night-600/50"
-            >
-              {effect.label}
-            </button>
+            <span key={i} className="px-2 py-0.5 bg-night-700/50 rounded text-gray-400">
+              {effect.label} ({formatTime(effect.position * (duration || 0))})
+            </span>
           ))}
         </div>
       )}
