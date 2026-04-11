@@ -34,9 +34,12 @@ function createWavHeader(pcmDataLength: number): Buffer {
 
 export async function narrateStory(params: {
   ttsScript: string;
+  voiceName?: string;
 }): Promise<{ audioBuffer: Buffer; mimeType: string }> {
   const ai = getGeminiClient();
+  const voice = params.voiceName ?? "Aoede";
 
+  console.log("TTS voice:", voice);
   console.log("TTS prompt (first 500 chars):", params.ttsScript.slice(0, 500));
 
   const response = await ai.models.generateContent({
@@ -47,7 +50,7 @@ export async function narrateStory(params: {
       speechConfig: {
         voiceConfig: {
           prebuiltVoiceConfig: {
-            voiceName: "Aoede",
+            voiceName: voice,
           },
         },
       },

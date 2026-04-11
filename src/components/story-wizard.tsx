@@ -13,6 +13,7 @@ export function StoryWizard() {
   // Settings
   const [model, setModel] = useState<GeminiModel>("gemini-3.1-flash-lite-preview");
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>("none");
+  const [voiceName, setVoiceName] = useState("Aoede");
   const [sourceType, setSourceType] = useState<SourceType>("tanakh");
 
   // Content
@@ -106,7 +107,7 @@ export function StoryWizard() {
       const res = await fetch("/api/generate/narrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ttsScript }),
+        body: JSON.stringify({ ttsScript, voiceName }),
       });
       if (!res.ok) throw new Error("Failed to generate audio");
       const data = await res.json();
@@ -121,7 +122,7 @@ export function StoryWizard() {
     } finally {
       setIsGeneratingAudio(false);
     }
-  }, [ttsScript]);
+  }, [ttsScript, voiceName]);
 
   const handleSaved = (id: string, slug: string) => {
     setCurrentStoryId(id);
@@ -159,8 +160,10 @@ export function StoryWizard() {
       <SettingsBar
         model={model}
         thinkingLevel={thinkingLevel}
+        voiceName={voiceName}
         onModelChange={setModel}
         onThinkingLevelChange={setThinkingLevel}
+        onVoiceChange={setVoiceName}
       />
 
       <SourceInput
@@ -237,6 +240,7 @@ export function StoryWizard() {
           ttsScript: ttsScript || undefined,
           model,
           thinkingLevel,
+          voiceName,
         }}
         audioBase64={audioBase64}
         onSaved={handleSaved}
