@@ -4,61 +4,62 @@ Your task: Take the children's story and produce a TTS-ready prompt. The output 
 
 IMPORTANT RULES:
 - This is a SINGLE speaker narration - one voice tells the entire story
-- For character dialogue, use inline style cues so the narrator changes her manner of speaking (e.g., deeper voice for a man, higher pitch for a child, gruff tone for a villain) - like a grandmother doing character impressions
-- Do NOT add inline directives in the narration text itself - put style cues BEFORE each dialogue line
+- ALL output must be in HEBREW - including all directions, cues, and instructions to the TTS
+- For character dialogue, use inline style cues in Hebrew so the narrator changes her manner of speaking - like a grandmother doing character impressions
+- Put style cues BEFORE each dialogue line
 - The Director's Notes must reference SPECIFIC moments from THIS story
 - Preserve any nikud (ניקוד) from the story text exactly as-is
-- NEVER use "whisper" - it causes metallic audio artifacts. Use "softer", "gentler", "slower" instead.
+- NEVER use "לחישה" (whisper) - it causes metallic audio artifacts. Use "רכות", "עדינות", "לאט" instead.
 
 Produce this structure:
 
-Tell this bedtime story in Hebrew. Follow the Hebrew nikud (diacritics) carefully for correct pronunciation.
+ספרי את סיפור השינה הזה בעברית. עקבי אחרי הניקוד בקפידה להגייה נכונה.
 
-## Performance Directions
+## הנחיות ביצוע
 
-Voice: A warm, loving grandmother telling an ancient story. Voice like a gentle embrace.
+קול: סבתא חמה ואוהבת שמספרת סיפור עתיק. קול כמו חיבוק רך.
 
-Scene: A cozy children's bedroom at night. Soft moonlight, warm blankets.
+סצנה: חדר ילדים חמים בלילה. אור ירח רך, שמיכות חמות.
 
-Story-Specific Moments:
-[Map out 4-6 key moments from THIS specific story with voice direction. Examples:]
-* [Opening line about X] - Warm, inviting tone with a storytelling cadence
-* [When Y happens] - Voice fills with wonder, pace quickens slightly
-* [The dramatic moment of Z] - Voice drops lower and softer, then builds with gravitas
-* [Dialogue by male character] - Shift to a deeper, rougher tone, imitating a man's voice
-* [Dialogue by child character] - Shift to a higher, lighter, excited tone
-* [The resolution] - Voice softens, warm smile in voice
-* [Final lines] - Very soft and slow, gentle lullaby pace
+רגעים מרכזיים בסיפור:
+[מפה 4-6 רגעים מרכזיים מהסיפור הספציפי הזה עם הנחיות קול. דוגמאות:]
+* [המשפט הפותח על X] - טון חם ומזמין עם קצב של סיפור
+* [כאשר Y קורה] - הקול מתמלא בפליאה, הקצב מואץ קלות
+* [הרגע הדרמטי של Z] - הקול יורד ונעשה רך יותר, ואז עולה בעוצמה
+* [דיאלוג של דמות גברית] - לעבור לטון עמוק וגס יותר, כמו חיקוי של גבר
+* [דיאלוג של ילד] - לעבור לטון גבוה וקליל יותר, נלהב
+* [הסיום] - הקול מתרכך, חיוך בקול
+* [המשפטים האחרונים] - רך מאוד ואיטי, קצב של שיר ערש
 
-Character Voice Impressions:
-* For each character in the story, describe how the narrator should change her voice
-* [Character name] - [voice impression description, e.g., "deeper and slower, like imitating a big strong man", "higher pitch and faster, like an excited little boy", "old and creaky, like a wise elder"]
-* Make the voice shifts clear and playful - like a grandmother doing funny impressions for her grandchild
+חיקויי קולות דמויות:
+* לכל דמות בסיפור, תארי איך הסבתא צריכה לשנות את קולה
+* [שם הדמות] - [תיאור חיקוי הקול, למשל: "עמוק ואיטי, כמו חיקוי של גבר גדול וחזק", "גבוה ומהיר, כמו ילד קטן נרגש", "זקן ורועד, כמו זקן חכם"]
+* השינויים צריכים להיות ברורים ומשעשעים - כמו סבתא שעושה חיקויים מצחיקים לנכד שלה
 
-Style:
-* Warm, enveloping voice with a "vocal smile"
-* Natural storytelling cadence with meaningful pauses
-* Shift voice noticeably for each character's dialogue - pitch, pace, energy
-* Return to warm narrator voice after each dialogue
-* Final paragraph very soft and slow - NOT whispered
+סגנון:
+* קול חם ועוטף עם "חיוך קולי"
+* קצב סיפורי טבעי עם הפסקות משמעותיות
+* לשנות את הקול בצורה ניכרת לדיאלוג של כל דמות - גובה, קצב, אנרגיה
+* לחזור לקול הסבתא החם אחרי כל דיאלוג
+* הפסקה אחרונה רכה מאוד ואיטית - לא לחישה
 
-Pace & Dynamics:
-* Opening: moderate, settling-in pace
-* [Story-specific pacing notes for key transitions]
-* Ending: progressively slower, longer pauses, very gentle and soft
+קצב ודינמיקה:
+* פתיחה: קצב מתון, מתיישבים
+* [הערות קצב ספציפיות למעברים מרכזיים בסיפור]
+* סיום: איטי יותר ויותר, הפסקות ארוכות, עדין ורך מאוד
 
-## Story
+## הסיפור
 
-[Full story text in Hebrew. Before each dialogue line, add a brief inline cue in parentheses describing how to shift the voice. Example format:]
+[הטקסט המלא של הסיפור בעברית. לפני כל שורת דיאלוג, הוסיפי רמז קצר בסוגריים שמתאר איך לשנות את הקול. דוגמת פורמט:]
 
 פַּעַם, לִפְנֵי הַרְבֵּה שָׁנִים...
-(shift to a deep, booming voice)
+(לעבור לקול עמוק ורועם)
 "אֲנִי הַמֶּלֶךְ הַגָּדוֹל!"
-(return to warm narrator voice)
+(לחזור לקול הסבתא החם)
 וְאָז הַיֶּלֶד הַקָּטָן אָמַר בְּקוֹל רַךְ:
-(shift to a small, gentle child's voice)
+(לעבור לקול קטן ועדין של ילד)
 "אֲבָל אֲנִי לֹא מְפַחֵד..."
-(return to warm narrator voice)
+(לחזור לקול הסבתא החם)
 וְכֻלָּם חָיוּ בְּאוֹשֶׁר.
 
 Transform the following children's story:`;
