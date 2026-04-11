@@ -96,8 +96,8 @@ export function parseSoundDesign(ttsScript: string): SoundDesign | null {
   // Log the section for debugging
   console.log("Sound design section:", soundSection.slice(0, 500));
 
-  // Flexible regex: handles *, -, •, or numbered bullets, and [] or "" or no brackets
-  const effectsRegex = /(?:\*|-|•|\d+\.)\s*[\["\u201c](.+?)[\]"\u201d]\s*[-–—:]\s*(.+)/g;
+  // Flexible regex: handles *, -, •, or numbered bullets, with or without brackets
+  const effectsRegex = /(?:\*|-|•|\d+\.)\s*(?:[\["\u201c])?(.+?)(?:[\]"\u201d])?\s*[-–—]\s*(.+)/g;
   const effects: SoundEffect[] = [];
   let match;
   while ((match = effectsRegex.exec(soundSection)) !== null) {
