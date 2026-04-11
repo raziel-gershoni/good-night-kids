@@ -1,6 +1,7 @@
 import { getGeminiClient } from "./client";
 
-async function generateAudioClip(prompt: string): Promise<Buffer> {
+// Lyria 3 for ambient/music loops
+async function generateLyriaClip(prompt: string): Promise<Buffer> {
   const ai = getGeminiClient();
 
   const response = await ai.models.generateContent({
@@ -22,12 +23,46 @@ async function generateAudioClip(prompt: string): Promise<Buffer> {
   throw new Error("No audio data in Lyria 3 response");
 }
 
+// ElevenLabs for actual sound effects
+async function generateElevenLabsSfx(
+  prompt: string,
+  durationSeconds: number = 3
+): Promise<Buffer> {
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey) {
+    throw new Error("ELEVENLABS_API_KEY not set");
+  }
+
+  const response = await fetch(
+    "https://api.elevenlabs.io/v1/sound-generation",
+    {
+      method: "POST",
+      headers: {
+        "xi-api-key": apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text: prompt,
+        duration_seconds: durationSeconds,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`ElevenLabs SFX error: ${response.status} - ${errorText}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
 export async function generateAmbientSound(prompt: string): Promise<Buffer> {
-  return generateAudioClip(prompt);
+  return generateLyriaClip(prompt);
 }
 
 export async function generateSoundEffect(prompt: string): Promise<Buffer> {
-  return generateAudioClip(prompt);
+  return generateElevenLabsSfx(prompt, 4);
 }
 
 export interface SoundEffect {
