@@ -24,6 +24,7 @@ export function StoryWizard() {
 
   // Loading states
   const [isGeneratingStory, setIsGeneratingStory] = useState(false);
+  const [isSpellchecking, setIsSpellchecking] = useState(false);
   const [isGeneratingDirections, setIsGeneratingDirections] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
 
@@ -57,6 +58,25 @@ export function StoryWizard() {
       setIsGeneratingStory(false);
     }
   }, [originalText, sourceType, model, thinkingLevel]);
+
+  const spellcheck = useCallback(async () => {
+    clearError();
+    setIsSpellchecking(true);
+    try {
+      const res = await fetch("/api/generate/spellcheck", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ childrenStory, model, thinkingLevel }),
+      });
+      if (!res.ok) throw new Error("Failed to spellcheck");
+      const data = await res.json();
+      setChildrenStory(data.correctedStory);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "שגיאה בבדיקת דקדוק");
+    } finally {
+      setIsSpellchecking(false);
+    }
+  }, [childrenStory, model, thinkingLevel]);
 
   const generateDirections = useCallback(async () => {
     clearError();
@@ -165,7 +185,23 @@ export function StoryWizard() {
         onGenerate={generateStory}
         value={childrenStory}
         onChange={setChildrenStory}
-      />
+      >
+        {childrenStory && (
+          <button
+            onClick={spellcheck}
+            disabled={isSpellchecking}
+            className="px-4 py-1.5 bg-night-700 hover:bg-night-600 disabled:bg-night-800 disabled:text-gray-600 text-sm text-gray-300 rounded-lg transition-colors flex items-center gap-2 border border-night-600/50"
+          >
+            {isSpellchecking && (
+              <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            )}
+            {isSpellchecking ? "בודק..." : "בדוק דקדוק"}
+          </button>
+        )}
+      </StepSection>
 
       <StepSection
         stepNumber={2}
