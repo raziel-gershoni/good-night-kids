@@ -32,25 +32,11 @@ function createWavHeader(pcmDataLength: number): Buffer {
   return header;
 }
 
-function extractVoice(ttsScript: string, label: string, fallback: string): string {
-  const regex = new RegExp(`${label} Voice:\\s*(\\w+)`);
-  const match = ttsScript.match(regex);
-  return match ? match[1] : fallback;
-}
-
 export async function narrateStory(params: {
   ttsScript: string;
 }): Promise<{ audioBuffer: Buffer; mimeType: string }> {
   const ai = getGeminiClient();
-  const narratorVoice = extractVoice(params.ttsScript, "Narrator", "Kore");
-  let characterVoice = extractVoice(params.ttsScript, "Character", "Puck");
-  if (characterVoice === narratorVoice) {
-    characterVoice = narratorVoice === "Puck" ? "Kore" : "Puck";
-  }
 
-  // Send the script exactly as the user sees it - no hidden transformations
-  console.log("TTS narrator voice:", narratorVoice);
-  console.log("TTS character voice:", characterVoice);
   console.log("TTS prompt (first 500 chars):", params.ttsScript.slice(0, 500));
 
   const response = await ai.models.generateContent({
@@ -59,25 +45,10 @@ export async function narrateStory(params: {
     config: {
       responseModalities: ["AUDIO"],
       speechConfig: {
-        multiSpeakerVoiceConfig: {
-          speakerVoiceConfigs: [
-            {
-              speaker: "Narrator",
-              voiceConfig: {
-                prebuiltVoiceConfig: {
-                  voiceName: narratorVoice,
-                },
-              },
-            },
-            {
-              speaker: "Character",
-              voiceConfig: {
-                prebuiltVoiceConfig: {
-                  voiceName: characterVoice,
-                },
-              },
-            },
-          ],
+        voiceConfig: {
+          prebuiltVoiceConfig: {
+            voiceName: "Aoede",
+          },
         },
       },
     },
