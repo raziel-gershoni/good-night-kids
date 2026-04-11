@@ -27,18 +27,21 @@ A cozy children's bedroom at night. Soft moonlight, warm blankets. The grandmoth
 
 Story-Specific Moments:
 [Map out 4-6 key moments from THIS specific story with voice direction for each. Examples:]
-* [Opening line about X] - Narrator uses warm, inviting tone with a storytelling cadence
-* [When Y happens] - Narrator's voice fills with wonder, pace quickens slightly
-* [The dramatic moment of Z] - Narrator drops to a dramatic whisper, then builds with gravitas
+* [Opening line about X] - Warm, inviting tone with a storytelling cadence
+* [When Y happens] - Voice fills with wonder, pace quickens slightly
+* [The dramatic moment of Z] - Voice drops lower and softer, then builds with gravitas
 * [Character dialogue about W] - Character voice is [specific emotion fitting the dialogue]
-* [The resolution] - Narrator softens, warm smile in voice
-* [Final lines] - Near-whisper, lullaby pace, trailing off as if the child is falling asleep
+* [The resolution] - Voice softens, warm smile in voice
+* [Final lines] - Very soft and slow, gentle lullaby pace
+
+CRITICAL - NEVER use "whisper" for narration. Whispering causes metallic audio artifacts.
+Use "softer", "gentler", "slower", "quieter" instead. Only use whisper for character dialogue when the character is actually whispering in the story.
 
 Narrator Style:
 * Warm, enveloping voice with a "vocal smile"
 * Natural storytelling cadence with meaningful pauses
 * Contrast between energetic story moments and gentle quiet moments
-* Final paragraph whispered like a lullaby
+* Final paragraph very soft and slow - NOT whispered
 
 Character Style:
 * [Describe the specific voice quality fitting this story's character - age, energy, emotion]
@@ -48,7 +51,7 @@ Character Style:
 Pace & Dynamics:
 * Opening: moderate, settling-in pace
 * [Story-specific pacing notes for key transitions]
-* Ending: progressively slower, longer pauses, drifting toward sleep
+* Ending: progressively slower, longer pauses, very gentle and soft - never whisper
 
 ### RECOMMENDED VOICES
 Choose from these Gemini voices based on the story's characters and tone: Kore (firm), Leda (youthful), Enceladus (breathy), Aoede (warm), Puck (upbeat), Charon (informative), Fenrir (excitable)

@@ -38,6 +38,13 @@ function extractVoice(ttsScript: string, label: string, fallback: string): strin
   return match ? match[1] : fallback;
 }
 
+function extractTranscript(ttsScript: string): string {
+  const marker = "### TRANSCRIPT";
+  const idx = ttsScript.indexOf(marker);
+  if (idx === -1) return ttsScript;
+  return ttsScript.slice(idx + marker.length).trim();
+}
+
 export async function narrateStory(params: {
   ttsScript: string;
 }): Promise<{ audioBuffer: Buffer; mimeType: string }> {
@@ -45,9 +52,14 @@ export async function narrateStory(params: {
   const narratorVoice = extractVoice(params.ttsScript, "Narrator", "Kore");
   const characterVoice = extractVoice(params.ttsScript, "Character", "Puck");
 
+  // Send only the transcript to TTS - the preamble's "Narrator"/"Character"
+  // words confuse multi-speaker detection
+  const transcript = extractTranscript(params.ttsScript);
+  const ttsPrompt = `Tell this bedtime story in a warm, gentle voice. Speak softly and slowly toward the end.\n\n${transcript}`;
+
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
-    contents: params.ttsScript,
+    contents: ttsPrompt,
     config: {
       responseModalities: ["AUDIO"],
       speechConfig: {
