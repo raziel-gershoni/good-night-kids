@@ -93,27 +93,21 @@ export function parseSoundDesign(ttsScript: string): SoundDesign | null {
 
   const ambientMatch = soundSection.match(/אווירה:\s*(.+)/);
 
-  // Log the section for debugging
   console.log("Sound design section:", soundSection.slice(0, 500));
 
-  // Flexible regex: handles *, -, •, or numbered bullets, with or without brackets
-  const effectsRegex = /(?:\*|-|•|\d+\.)\s*(?:[\["\u201c])?(.+?)(?:[\]"\u201d])?\s*[-–—]\s*(.+)/g;
+  // Match: * 35% - description  OR  * [quote] @ 35% - description  OR  * quote - description
+  const effectsRegex = /(?:\*|-|•)\s*(\d+)%\s*[-–—]\s*(.+)/g;
   const effects: SoundEffect[] = [];
   let match;
   while ((match = effectsRegex.exec(soundSection)) !== null) {
-    const label = match[1].trim();
+    const percentage = parseInt(match[1], 10);
     const prompt = match[2].trim();
+    const position = Math.max(0, Math.min(1, percentage / 100));
 
-    let position = 0.5;
-    if (storyLength > 0) {
-      const labelIdx = storyText.indexOf(label);
-      if (labelIdx !== -1) {
-        position = labelIdx / storyLength;
-      }
-    }
-
-    effects.push({ label, prompt, position });
+    effects.push({ label: `${percentage}%`, prompt, position });
   }
+
+  console.log("Parsed effects:", effects.length, effects.map(e => `${e.label}: ${e.prompt.slice(0, 40)}`));
 
   return {
     ambientPrompt: ambientMatch?.[1]?.trim() || "Peaceful nighttime sounds with gentle lullaby music, soft piano, crickets, soft breeze",

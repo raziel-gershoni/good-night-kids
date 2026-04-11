@@ -68,7 +68,7 @@ export function AudioPlayer({
           if (!playedEffectsRef.current.has(i)) {
             playedEffectsRef.current.add(i);
             const audio = new Audio(effect.audioUrl);
-            audio.volume = 0.3;
+            audio.volume = 0.7;
             audio.play();
           }
         }, delay);
@@ -179,7 +179,7 @@ export function AudioPlayer({
           const effectSource = offlineCtx.createBufferSource();
           effectSource.buffer = effectBuffer;
           const effectGain = offlineCtx.createGain();
-          effectGain.gain.value = 0.3;
+          effectGain.gain.value = 0.7;
           effectSource.connect(effectGain).connect(offlineCtx.destination);
           effectSource.start(effect.position * totalDuration);
         } catch {
@@ -379,7 +379,7 @@ export function AudioPlayer({
               key={i}
               onClick={() => {
                 const audio = new Audio(effect.audioUrl);
-                audio.volume = 0.3;
+                audio.volume = 0.7;
                 audio.play();
               }}
               className="px-2 py-0.5 bg-night-700/50 hover:bg-night-600 rounded text-gray-400 hover:text-gold-400 transition-colors cursor-pointer"
