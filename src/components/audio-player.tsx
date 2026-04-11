@@ -370,17 +370,23 @@ export function AudioPlayer({
         </div>
       )}
 
-      {/* Sound effects info */}
+      {/* Sound effects - click to preview */}
       {effects.length > 0 && (
         <div className="text-xs text-gray-500 flex flex-wrap gap-2">
           <span>אפקטים:</span>
           {effects.map((effect, i) => (
-            <span
+            <button
               key={i}
-              className="px-2 py-0.5 bg-night-700/50 rounded text-gray-400"
+              onClick={() => {
+                const audio = new Audio(effect.audioUrl);
+                audio.volume = 0.3;
+                audio.play();
+              }}
+              className="px-2 py-0.5 bg-night-700/50 hover:bg-night-600 rounded text-gray-400 hover:text-gold-400 transition-colors cursor-pointer"
+              title="לחץ להשמעה"
             >
-              {effect.label} ({formatTime(effect.position * (duration || 0))})
-            </span>
+              ▶ {effect.label} ({formatTime(effect.position * (duration || 0))})
+            </button>
           ))}
         </div>
       )}
