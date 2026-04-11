@@ -9,6 +9,7 @@ IMPORTANT RULES:
 - Narrator speaks all narration. Character speaks ALL dialogue lines regardless of which character says them
 - Do NOT add inline directives in the transcript - all direction goes in the preamble
 - The Director's Notes must reference SPECIFIC moments from THIS story, not generic instructions
+- Preserve any nikud (ניקוד) from the story text exactly as-is in the transcript - it helps the TTS pronounce ambiguous words correctly
 
 Produce this structure:
 
