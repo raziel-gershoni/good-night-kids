@@ -50,10 +50,13 @@ Pace & Dynamics:
 * [Story-specific pacing notes for key transitions]
 * Ending: progressively slower, longer pauses, drifting toward sleep
 
-### RECOMMENDED CHARACTER VOICE
-[Suggest one of these Gemini voices for the character based on the story: Kore (firm), Leda (youthful), Enceladus (breathy), Aoede (warm), Puck (upbeat), Charon (informative), Fenrir (excitable)]
-Voice: [name]
-Reason: [why this voice fits the character]
+### RECOMMENDED VOICES
+Choose from these Gemini voices based on the story's characters and tone: Kore (firm), Leda (youthful), Enceladus (breathy), Aoede (warm), Puck (upbeat), Charon (informative), Fenrir (excitable)
+
+Narrator Voice: [name]
+Narrator Reason: [why this voice fits the narrator tone for this story]
+Character Voice: [name]
+Character Reason: [why this voice fits the character]
 
 ### TRANSCRIPT
 [Full story with Narrator:/Character: labels. Example format:]

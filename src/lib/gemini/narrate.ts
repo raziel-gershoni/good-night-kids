@@ -32,18 +32,18 @@ function createWavHeader(pcmDataLength: number): Buffer {
   return header;
 }
 
-function extractRecommendedVoice(ttsScript: string): string | null {
-  const match = ttsScript.match(/### RECOMMENDED CHARACTER VOICE[\s\S]*?Voice:\s*(\w+)/);
-  return match ? match[1] : null;
+function extractVoice(ttsScript: string, label: string, fallback: string): string {
+  const regex = new RegExp(`${label} Voice:\\s*(\\w+)`);
+  const match = ttsScript.match(regex);
+  return match ? match[1] : fallback;
 }
 
 export async function narrateStory(params: {
   ttsScript: string;
-  voiceName?: string;
 }): Promise<{ audioBuffer: Buffer; mimeType: string }> {
   const ai = getGeminiClient();
-  const narratorVoice = params.voiceName ?? "Kore";
-  const characterVoice = extractRecommendedVoice(params.ttsScript) ?? "Puck";
+  const narratorVoice = extractVoice(params.ttsScript, "Narrator", "Kore");
+  const characterVoice = extractVoice(params.ttsScript, "Character", "Puck");
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",

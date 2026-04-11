@@ -30,15 +30,6 @@ export const SOURCE_TYPES: { value: SourceType; label: string }[] = [
   { value: "other", label: "אחר" },
 ];
 
-export const TTS_VOICES: { value: string; label: string }[] = [
-  { value: "Kore", label: "Kore (יציב)" },
-  { value: "Leda", label: "Leda (צעיר)" },
-  { value: "Enceladus", label: "Enceladus (רך)" },
-  { value: "Aoede", label: "Aoede (חם)" },
-  { value: "Puck", label: "Puck (עליז)" },
-  { value: "Charon", label: "Charon (מידעי)" },
-];
-
 export interface StoryData {
   id?: string;
   slug?: string;
@@ -50,7 +41,6 @@ export interface StoryData {
   audioUrl?: string;
   model: GeminiModel;
   thinkingLevel: ThinkingLevel;
-  voiceName: string;
 }
 
 export interface SavedStory {

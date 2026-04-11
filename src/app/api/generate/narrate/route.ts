@@ -5,7 +5,7 @@ export const maxDuration = 120;
 
 export async function POST(request: Request) {
   try {
-    const { ttsScript, voiceName } = await request.json();
+    const { ttsScript } = await request.json();
 
     if (!ttsScript?.trim()) {
       return NextResponse.json(
@@ -14,10 +14,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { audioBuffer, mimeType } = await narrateStory({
-      ttsScript,
-      voiceName: voiceName || "Kore",
-    });
+    const { audioBuffer, mimeType } = await narrateStory({ ttsScript });
 
     const audioBase64 = audioBuffer.toString("base64");
 
