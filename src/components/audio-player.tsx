@@ -29,6 +29,7 @@ export function AudioPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [ambientVolume, setAmbientVolume] = useState(0.15);
+  const [effectsVolume, setEffectsVolume] = useState(0.7);
   const [isMixing, setIsMixing] = useState(false);
   const effectTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const playedEffectsRef = useRef<Set<number>>(new Set());
@@ -68,7 +69,7 @@ export function AudioPlayer({
           if (!playedEffectsRef.current.has(i)) {
             playedEffectsRef.current.add(i);
             const audio = new Audio(effect.audioUrl);
-            audio.volume = 0.7;
+            audio.volume = effectsVolume;
             audio.play();
           }
         }, delay);
@@ -179,7 +180,7 @@ export function AudioPlayer({
           const effectSource = offlineCtx.createBufferSource();
           effectSource.buffer = effectBuffer;
           const effectGain = offlineCtx.createGain();
-          effectGain.gain.value = 0.7;
+          effectGain.gain.value = effectsVolume;
           effectSource.connect(effectGain).connect(offlineCtx.destination);
           effectSource.start(effect.position * totalDuration);
         } catch {
@@ -230,7 +231,7 @@ export function AudioPlayer({
     } finally {
       setIsMixing(false);
     }
-  }, [audioUrl, ambientUrl, ambientVolume, effects]);
+  }, [audioUrl, ambientUrl, ambientVolume, effectsVolume, effects]);
 
   if (isLoading) {
     return (
@@ -354,19 +355,39 @@ export function AudioPlayer({
         </button>
       </div>
 
-      {/* Volume control for ambient */}
-      {ambientUrl && (
-        <div className="flex items-center gap-2 text-xs text-gray-400">
-          <span>אווירה:</span>
-          <input
-            type="range"
-            min={0}
-            max={0.5}
-            step={0.01}
-            value={ambientVolume}
-            onChange={(e) => setAmbientVolume(parseFloat(e.target.value))}
-            className="w-24 accent-gold-400 h-1"
-          />
+      {/* Volume controls */}
+      {(ambientUrl || effects.length > 0) && (
+        <div className="flex flex-wrap gap-4 text-xs text-gray-400">
+          {ambientUrl && (
+            <div className="flex items-center gap-2">
+              <span>אווירה:</span>
+              <input
+                type="range"
+                min={0}
+                max={0.5}
+                step={0.01}
+                value={ambientVolume}
+                onChange={(e) => setAmbientVolume(parseFloat(e.target.value))}
+                className="w-20 accent-gold-400 h-1"
+              />
+              <span className="text-gray-500 min-w-[32px]">{Math.round(ambientVolume * 200)}%</span>
+            </div>
+          )}
+          {effects.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span>אפקטים:</span>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={effectsVolume}
+                onChange={(e) => setEffectsVolume(parseFloat(e.target.value))}
+                className="w-20 accent-gold-400 h-1"
+              />
+              <span className="text-gray-500 min-w-[32px]">{Math.round(effectsVolume * 100)}%</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -379,7 +400,7 @@ export function AudioPlayer({
               key={i}
               onClick={() => {
                 const audio = new Audio(effect.audioUrl);
-                audio.volume = 0.7;
+                audio.volume = effectsVolume;
                 audio.play();
               }}
               className="px-2 py-0.5 bg-night-700/50 hover:bg-night-600 rounded text-gray-400 hover:text-gold-400 transition-colors cursor-pointer"
