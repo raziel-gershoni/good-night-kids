@@ -38,11 +38,38 @@ function extractVoice(ttsScript: string, label: string, fallback: string): strin
   return match ? match[1] : fallback;
 }
 
-function extractTranscript(ttsScript: string): string {
-  const marker = "### TRANSCRIPT";
-  const idx = ttsScript.indexOf(marker);
-  if (idx === -1) return ttsScript;
-  return ttsScript.slice(idx + marker.length).trim();
+function extractSection(ttsScript: string, startMarker: string, endMarkers: string[]): string {
+  const startIdx = ttsScript.indexOf(startMarker);
+  if (startIdx === -1) return "";
+  const afterMarker = ttsScript.slice(startIdx + startMarker.length);
+
+  let endIdx = afterMarker.length;
+  for (const marker of endMarkers) {
+    const idx = afterMarker.indexOf(marker);
+    if (idx !== -1 && idx < endIdx) endIdx = idx;
+  }
+  return afterMarker.slice(0, endIdx).trim();
+}
+
+function buildTtsPrompt(ttsScript: string): string {
+  const directorsNotes = extractSection(ttsScript, "### DIRECTOR'S NOTES", ["### RECOMMENDED VOICES", "### TRANSCRIPT"]);
+  const transcript = extractSection(ttsScript, "### TRANSCRIPT", []);
+
+  // Clean Director's Notes: replace speaker names to avoid confusing multi-speaker labels
+  const cleanedNotes = directorsNotes
+    .replace(/\bNarrator\b/g, "the storyteller")
+    .replace(/\bCharacter\b/g, "the character");
+
+  if (!transcript) return ttsScript;
+
+  return `TTS the following bedtime story with two speakers: Narrator and Character.
+IMPORTANT: Narrator and Character MUST sound like completely different people - different pitch, different tone, different energy.
+The text contains Hebrew nikud (diacritics/vowel marks) - follow them carefully for correct pronunciation.
+
+Performance directions:
+${cleanedNotes}
+
+${transcript}`;
 }
 
 export async function narrateStory(params: {
@@ -56,15 +83,7 @@ export async function narrateStory(params: {
     characterVoice = narratorVoice === "Puck" ? "Kore" : "Puck";
   }
 
-  // Send only the transcript to TTS - the preamble's "Narrator"/"Character"
-  // words confuse multi-speaker detection
-  const transcript = extractTranscript(params.ttsScript);
-  const ttsPrompt = `TTS the following bedtime story with two speakers: Narrator and Character.
-IMPORTANT: Narrator and Character MUST sound like completely different people - different pitch, different tone, different energy.
-The text contains Hebrew nikud (diacritics/vowel marks) - follow them carefully for correct pronunciation.
-Speak warmly and gently, slowing down toward the end.
-
-${transcript}`;
+  const ttsPrompt = buildTtsPrompt(params.ttsScript);
 
   console.log("TTS narrator voice:", narratorVoice);
   console.log("TTS character voice:", characterVoice);
