@@ -50,12 +50,21 @@ export async function narrateStory(params: {
 }): Promise<{ audioBuffer: Buffer; mimeType: string }> {
   const ai = getGeminiClient();
   const narratorVoice = extractVoice(params.ttsScript, "Narrator", "Kore");
-  const characterVoice = extractVoice(params.ttsScript, "Character", "Puck");
+  let characterVoice = extractVoice(params.ttsScript, "Character", "Puck");
+  // Ensure voices are different - if same, pick a contrasting one
+  if (characterVoice === narratorVoice) {
+    characterVoice = narratorVoice === "Puck" ? "Kore" : "Puck";
+  }
 
   // Send only the transcript to TTS - the preamble's "Narrator"/"Character"
   // words confuse multi-speaker detection
   const transcript = extractTranscript(params.ttsScript);
-  const ttsPrompt = `TTS the following bedtime story narrated by Narrator and Character. Speak warmly and gently, slowing down toward the end.\n\n${transcript}`;
+  const ttsPrompt = `TTS the following bedtime story with two speakers: Narrator and Character.
+IMPORTANT: Narrator and Character MUST sound like completely different people - different pitch, different tone, different energy.
+The text contains Hebrew nikud (diacritics/vowel marks) - follow them carefully for correct pronunciation.
+Speak warmly and gently, slowing down toward the end.
+
+${transcript}`;
 
   console.log("TTS narrator voice:", narratorVoice);
   console.log("TTS character voice:", characterVoice);
