@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       ttsScript: body.ttsScript,
       audioData,
       audioMimeType: audioData ? "audio/wav" : undefined,
-      model: body.model || "gemini-3.1-flash",
+      model: body.model || "gemini-2.5-flash",
       thinkingLevel: body.thinkingLevel,
       title: body.title,
     });

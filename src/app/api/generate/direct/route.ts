@@ -16,7 +16,7 @@ export async function POST(request: Request) {
 
     const ttsScript = await directStory({
       childrenStory,
-      model: model || "gemini-3.1-flash",
+      model: model || "gemini-2.5-flash",
       thinkingLevel: thinkingLevel || "none",
     });
 
