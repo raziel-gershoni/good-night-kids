@@ -11,7 +11,7 @@ import type { GeminiModel, ThinkingLevel, SourceType, SavedStory } from "@/lib/t
 
 export function StoryWizard() {
   // Settings
-  const [model, setModel] = useState<GeminiModel>("gemini-2.5-flash");
+  const [model, setModel] = useState<GeminiModel>("gemini-3-flash-preview");
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>("none");
   const [voiceName, setVoiceName] = useState("Kore");
   const [sourceType, setSourceType] = useState<SourceType>("tanakh");
@@ -116,7 +116,7 @@ export function StoryWizard() {
     setTtsScript(story.ttsScript || "");
     setCurrentStoryId(story.id);
     setCurrentSlug(story.slug);
-    setModel((story.model as GeminiModel) || "gemini-2.5-flash");
+    setModel((story.model as GeminiModel) || "gemini-3-flash-preview");
     setThinkingLevel((story.thinkingLevel as ThinkingLevel) || "none");
 
     if (story.hasAudio) {

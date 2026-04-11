@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const childrenStory = await adaptToChildrenStory({
       originalText,
       sourceType: sourceType || "other",
-      model: model || "gemini-2.5-flash",
+      model: model || "gemini-3-flash-preview",
       thinkingLevel: thinkingLevel || "none",
     });
 
