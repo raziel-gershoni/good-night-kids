@@ -71,7 +71,7 @@ export function StepSection({
             className="w-full bg-night-800 border border-night-600/50 rounded-xl p-4 text-white resize-y focus:outline-none focus:border-gold-400 leading-relaxed"
           />
           <div className="text-xs text-gray-500 text-left">
-            {value.trim().split(/\s+/).filter(Boolean).length} מילים
+            {value.trim().split(/\s+/).filter(Boolean).length} מילים | {value.length} תווים
           </div>
         </>
       )}
