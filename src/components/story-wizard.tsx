@@ -140,7 +140,7 @@ export function StoryWizard() {
       const res = await fetch("/api/generate/sounds", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ttsScript }),
+        body: JSON.stringify({ ttsScript, narrationBase64: audioBase64 }),
       });
       if (!res.ok) throw new Error("Failed to generate sounds");
       const data = await res.json();
@@ -153,12 +153,17 @@ export function StoryWizard() {
       setAmbientUrl(URL.createObjectURL(ambientBlob));
 
       const effects: SoundEffectData[] = data.effects.map(
-        (e: { label: string; position: number; audioBase64: string }) => {
+        (e: { label: string; timestampSeconds: number | null; fallbackPosition: number; audioBase64: string }) => {
           const blob = new Blob(
             [Uint8Array.from(atob(e.audioBase64), (c) => c.charCodeAt(0))],
             { type: data.mimeType }
           );
-          return { label: e.label, position: e.position, audioUrl: URL.createObjectURL(blob) };
+          return {
+            label: e.label,
+            timestampSeconds: e.timestampSeconds,
+            fallbackPosition: e.fallbackPosition,
+            audioUrl: URL.createObjectURL(blob),
+          };
         }
       );
       setSoundEffects(effects);
@@ -167,7 +172,7 @@ export function StoryWizard() {
     } finally {
       setIsGeneratingSounds(false);
     }
-  }, [ttsScript]);
+  }, [ttsScript, audioBase64]);
 
   const handleSaved = (id: string, slug: string) => {
     setCurrentStoryId(id);

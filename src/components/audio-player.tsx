@@ -5,7 +5,8 @@ import { useRef, useState, useEffect, useCallback } from "react";
 export interface SoundEffectData {
   label: string;
   audioUrl: string;
-  position: number; // 0-1 ratio in the story
+  timestampSeconds: number | null; // exact timestamp from Gemini audio analysis
+  fallbackPosition: number; // 0-1 ratio fallback
 }
 
 interface AudioPlayerProps {
@@ -61,7 +62,7 @@ export function AudioPlayer({
     const currentPos = narrationRef.current.currentTime;
 
     effects.forEach((effect, i) => {
-      const effectTime = effect.position * duration;
+      const effectTime = effect.timestampSeconds ?? effect.fallbackPosition * duration;
       const delay = (effectTime - currentPos) * 1000;
 
       if (delay > 0) {
@@ -182,7 +183,8 @@ export function AudioPlayer({
           const effectGain = offlineCtx.createGain();
           effectGain.gain.value = effectsVolume;
           effectSource.connect(effectGain).connect(offlineCtx.destination);
-          effectSource.start(effect.position * totalDuration);
+          const effectStartTime = effect.timestampSeconds ?? effect.fallbackPosition * totalDuration;
+          effectSource.start(effectStartTime);
         } catch {
           // Skip effect if it fails
         }
@@ -406,7 +408,7 @@ export function AudioPlayer({
               className="px-2 py-0.5 bg-night-700/50 hover:bg-night-600 rounded text-gray-400 hover:text-gold-400 transition-colors cursor-pointer"
               title="לחץ להשמעה"
             >
-              ▶ {effect.label} ({formatTime(effect.position * (duration || 0))})
+              ▶ {effect.label} ({formatTime(effect.timestampSeconds ?? effect.fallbackPosition * (duration || 0))})
             </button>
           ))}
         </div>

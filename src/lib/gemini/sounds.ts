@@ -44,6 +44,7 @@ async function generateElevenLabsSfx(
       body: JSON.stringify({
         text: prompt,
         duration_seconds: durationSeconds,
+        prompt_influence: 0.5,
       }),
     }
   );
@@ -65,10 +66,74 @@ export async function generateSoundEffect(prompt: string): Promise<Buffer> {
   return generateElevenLabsSfx(prompt, 4);
 }
 
+// Use Gemini audio analysis to find exact timestamps for effect phrases
+export async function findEffectTimestamps(
+  narrationBase64: string,
+  effectLabels: string[]
+): Promise<Map<string, number>> {
+  const ai = getGeminiClient();
+
+  const labelList = effectLabels
+    .map((label, i) => `${i + 1}. "${label}"`)
+    .join("\n");
+
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: [
+      {
+        parts: [
+          {
+            inlineData: {
+              mimeType: "audio/wav",
+              data: narrationBase64,
+            },
+          },
+          {
+            text: `Listen to this Hebrew audio narration carefully. For each phrase below, tell me the exact timestamp (in seconds) when it is spoken.
+
+${labelList}
+
+Respond ONLY in this exact format, one per line:
+1. [seconds]
+2. [seconds]
+3. [seconds]
+
+Example:
+1. 12.5
+2. 34.0
+3. 67.2
+
+Give only the numbers, no other text.`,
+          },
+        ],
+      },
+    ],
+  });
+
+  const text = response.text ?? "";
+  console.log("Gemini timestamp response:", text);
+
+  const timestamps = new Map<string, number>();
+  const lines = text.trim().split("\n");
+
+  for (const line of lines) {
+    const match = line.match(/(\d+)\.\s*([\d.]+)/);
+    if (match) {
+      const index = parseInt(match[1], 10) - 1;
+      const seconds = parseFloat(match[2]);
+      if (index >= 0 && index < effectLabels.length && !isNaN(seconds)) {
+        timestamps.set(effectLabels[index], seconds);
+      }
+    }
+  }
+
+  return timestamps;
+}
+
 export interface SoundEffect {
   label: string;
   prompt: string;
-  position: number; // 0-1 ratio in the story
+  position: number; // 0-1 ratio or exact seconds (interpreted by caller)
 }
 
 export interface SoundDesign {
@@ -83,34 +148,33 @@ export function parseSoundDesign(ttsScript: string): SoundDesign | null {
 
   const soundSection = ttsScript.slice(soundIdx + soundMarker.length);
 
-  // Extract story text (everything between ## הסיפור and ### עיצוב סאונד)
-  const storyMarker = "## הסיפור";
-  const storyStart = ttsScript.indexOf(storyMarker);
-  const storyText = storyStart !== -1
-    ? ttsScript.slice(storyStart + storyMarker.length, soundIdx).trim()
-    : "";
-  const storyLength = storyText.length;
-
   const ambientMatch = soundSection.match(/אווירה:\s*(.+)/);
 
   console.log("Sound design section:", soundSection.slice(0, 500));
 
-  // Match: * 35% - description  OR  * [quote] @ 35% - description  OR  * quote - description
-  const effectsRegex = /(?:\*|-|•)\s*(\d+)%\s*[-–—]\s*(.+)/g;
+  // Match: * [hebrew quote] - english description  OR  * hebrew quote - english description
+  const effectsRegex = /(?:\*|-|•)\s*(?:\[)?([^\]\-–—\n]+?)(?:\])?\s*[-–—]\s*(.+)/g;
   const effects: SoundEffect[] = [];
   let match;
   while ((match = effectsRegex.exec(soundSection)) !== null) {
-    const percentage = parseInt(match[1], 10);
+    const label = match[1].trim();
     const prompt = match[2].trim();
-    const position = Math.max(0, Math.min(1, percentage / 100));
+    // Skip the note line
+    if (label.startsWith("חוקי") || label.startsWith("הערה") || label.startsWith("תיאור")) continue;
 
-    effects.push({ label: `${percentage}%`, prompt, position });
+    effects.push({ label, prompt, position: 0 }); // position will be set by audio analysis
   }
 
-  console.log("Parsed effects:", effects.length, effects.map(e => `${e.label}: ${e.prompt.slice(0, 40)}`));
+  console.log(
+    "Parsed effects:",
+    effects.length,
+    effects.map((e) => `${e.label}: ${e.prompt.slice(0, 40)}`)
+  );
 
   return {
-    ambientPrompt: ambientMatch?.[1]?.trim() || "Peaceful nighttime sounds with gentle lullaby music, soft piano, crickets, soft breeze",
+    ambientPrompt:
+      ambientMatch?.[1]?.trim() ||
+      "Peaceful nighttime sounds with gentle lullaby music, soft piano, crickets, soft breeze",
     effects,
   };
 }
