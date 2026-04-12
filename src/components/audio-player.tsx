@@ -50,15 +50,27 @@ export function AudioPlayer({
       ambientBufferRef.current = null;
       return;
     }
-    const ctx = new AudioContext();
-    audioCtxRef.current = ctx;
+    // Reuse existing context or create new one
+    if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
+      audioCtxRef.current = new AudioContext();
+    }
+    const ctx = audioCtxRef.current;
     fetch(ambientUrl)
       .then(r => r.arrayBuffer())
       .then(ab => ctx.decodeAudioData(ab))
-      .then(buf => { ambientBufferRef.current = buf; })
-      .catch(() => { ambientBufferRef.current = null; });
-    return () => { ctx.close(); audioCtxRef.current = null; };
-  }, [ambientUrl]);
+      .then(buf => {
+        console.log("Ambient buffer loaded:", buf.duration, "seconds");
+        ambientBufferRef.current = buf;
+        // Auto-start if narration is already playing
+        if (isPlaying) {
+          startAmbientLoop();
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to decode ambient audio:", err);
+        ambientBufferRef.current = null;
+      });
+  }, [ambientUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60);
