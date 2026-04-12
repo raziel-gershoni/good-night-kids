@@ -16,7 +16,7 @@ export async function POST(request: Request) {
 
     const audioBuffer = await generateSpeech({
       text: ttsScript,
-      voiceId: voiceId || "21m00Tcm4TlvDq8ikWAM", // Rachel default
+      voiceId: voiceId || "JiKFunrRggP9Jl3AcoUw", // Rachel default
     });
 
     const audioBase64 = audioBuffer.toString("base64");

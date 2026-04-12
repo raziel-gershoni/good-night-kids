@@ -27,11 +27,7 @@ export const SOURCE_TYPES: { value: SourceType; label: string }[] = [
 // ElevenLabs Hebrew-compatible voices
 // These are default ElevenLabs voices - user can find voice IDs from their library
 export const TTS_VOICES: { value: string; label: string }[] = [
-  { value: "21m00Tcm4TlvDq8ikWAM", label: "Rachel (נשי)" },
-  { value: "29vD33N1CtxCmqQRPOHJ", label: "Drew (גברי)" },
-  { value: "EXAVITQu4vr4xnSDxMaL", label: "Sarah (נשי)" },
-  { value: "ErXwobaYiN019PkySvjV", label: "Antoni (גברי)" },
-  { value: "MF3mGyEYCl7XYWbV9V6O", label: "Elli (נשי)" },
+  { value: "JiKFunrRggP9Jl3AcoUw", label: "ברירת מחדל" },
 ];
 
 export interface StoryData {
