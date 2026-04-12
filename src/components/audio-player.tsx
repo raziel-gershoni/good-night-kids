@@ -84,12 +84,77 @@ export function AudioPlayer({
 
   const handleDownload = useCallback(async () => {
     if (!audioUrl) return;
-    // Simple download - just the narration
-    const a = document.createElement("a");
-    a.href = audioUrl;
-    a.download = "bedtime-story.mp3";
-    a.click();
-  }, [audioUrl]);
+
+    if (!ambientUrl) {
+      // No ambient - download narration directly
+      const a = document.createElement("a");
+      a.href = audioUrl;
+      a.download = "bedtime-story.mp3";
+      a.click();
+      return;
+    }
+
+    // Mix narration + ambient into single WAV
+    setIsMixing(true);
+    try {
+      const [narrationResp, ambientResp] = await Promise.all([
+        fetch(audioUrl).then((r) => r.arrayBuffer()),
+        fetch(ambientUrl).then((r) => r.arrayBuffer()),
+      ]);
+
+      const tempCtx = new AudioContext();
+      const [narrationBuf, ambientBuf] = await Promise.all([
+        tempCtx.decodeAudioData(narrationResp),
+        tempCtx.decodeAudioData(ambientResp),
+      ]);
+      await tempCtx.close();
+
+      const sampleRate = narrationBuf.sampleRate;
+      const fadeout = 4;
+      const totalLength = narrationBuf.length + fadeout * sampleRate;
+      const offlineCtx = new OfflineAudioContext(1, totalLength, sampleRate);
+
+      // Narration
+      const narSrc = offlineCtx.createBufferSource();
+      narSrc.buffer = narrationBuf;
+      narSrc.connect(offlineCtx.destination);
+      narSrc.start(0);
+
+      // Ambient loop with fadeout
+      const ambGain = offlineCtx.createGain();
+      const narDuration = narrationBuf.length / sampleRate;
+      ambGain.gain.setValueAtTime(ambientVolume, 0);
+      ambGain.gain.setValueAtTime(ambientVolume, narDuration);
+      ambGain.gain.linearRampToValueAtTime(0, narDuration + fadeout);
+
+      const loops = Math.ceil(totalLength / ambientBuf.length);
+      for (let i = 0; i < loops; i++) {
+        const src = offlineCtx.createBufferSource();
+        src.buffer = ambientBuf;
+        src.connect(ambGain).connect(offlineCtx.destination);
+        src.start((i * ambientBuf.length) / sampleRate);
+      }
+
+      const rendered = await offlineCtx.startRendering();
+      const wavData = audioBufferToWav(rendered);
+      const blob = new Blob([wavData], { type: "audio/wav" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "bedtime-story-mixed.wav";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Mix error:", err);
+      // Fallback: download narration only
+      const a = document.createElement("a");
+      a.href = audioUrl;
+      a.download = "bedtime-story.mp3";
+      a.click();
+    } finally {
+      setIsMixing(false);
+    }
+  }, [audioUrl, ambientUrl, ambientVolume]);
 
   if (isLoading) {
     return (
@@ -211,4 +276,41 @@ export function AudioPlayer({
       )}
     </div>
   );
+}
+
+function audioBufferToWav(buffer: AudioBuffer): ArrayBuffer {
+  const numChannels = buffer.numberOfChannels;
+  const sampleRate = buffer.sampleRate;
+  const bitsPerSample = 16;
+  const data = buffer.getChannelData(0);
+  const dataLength = data.length * (bitsPerSample / 8);
+  const totalSize = 44 + dataLength;
+  const arrayBuffer = new ArrayBuffer(totalSize);
+  const view = new DataView(arrayBuffer);
+
+  function w(offset: number, str: string) {
+    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+  }
+
+  w(0, "RIFF");
+  view.setUint32(4, totalSize - 8, true);
+  w(8, "WAVE");
+  w(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * numChannels * (bitsPerSample / 8), true);
+  view.setUint16(32, numChannels * (bitsPerSample / 8), true);
+  view.setUint16(34, bitsPerSample, true);
+  w(36, "data");
+  view.setUint32(40, dataLength, true);
+
+  let offset = 44;
+  for (let i = 0; i < data.length; i++) {
+    const s = Math.max(-1, Math.min(1, data[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+    offset += 2;
+  }
+  return arrayBuffer;
 }
