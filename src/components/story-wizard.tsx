@@ -131,7 +131,10 @@ export function StoryWizard() {
         method: "POST",
         body: formData,
       });
-      if (!res.ok) throw new Error("Failed to generate sounds");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Failed to generate sounds (${res.status})`);
+      }
       const data = await res.json();
 
       if (data.ambientBase64) {
