@@ -53,6 +53,29 @@ export function AudioPlayer({
     return () => clearTimeout(timer);
   }, [ambientUrl, isPlaying, ambientVolume]);
 
+  const effectTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  function scheduleEffects() {
+    effectTimeoutsRef.current.forEach(clearTimeout);
+    effectTimeoutsRef.current = [];
+    if (!narrationRef.current || !effects.length || !duration) return;
+    const pos = narrationRef.current.currentTime;
+    effects.forEach((effect) => {
+      const time = effect.timestampSeconds;
+      if (time === null) return;
+      const delay = (time - pos) * 1000;
+      if (delay > 0) {
+        effectTimeoutsRef.current.push(
+          setTimeout(() => {
+            const a = new Audio(effect.audioUrl);
+            a.volume = 0.5;
+            a.play();
+          }, delay)
+        );
+      }
+    });
+  }
+
   function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -65,12 +88,14 @@ export function AudioPlayer({
     if (isPlaying) {
       narrationRef.current.pause();
       ambientRef.current?.pause();
+      effectTimeoutsRef.current.forEach(clearTimeout);
     } else {
       narrationRef.current.play();
       if (ambientRef.current) {
         ambientRef.current.volume = ambientVolume;
         ambientRef.current.play().catch(() => {});
       }
+      scheduleEffects();
     }
     setIsPlaying(!isPlaying);
   }
@@ -85,6 +110,7 @@ export function AudioPlayer({
   function handleNarrationEnded() {
     setIsPlaying(false);
     ambientRef.current?.pause();
+    effectTimeoutsRef.current.forEach(clearTimeout);
   }
 
   const handleDownload = useCallback(async () => {
@@ -277,6 +303,27 @@ export function AudioPlayer({
             className="w-24 accent-gold-400 h-1"
           />
           <span className="text-gray-500 min-w-[32px]">{Math.round(ambientVolume * 200)}%</span>
+        </div>
+      )}
+
+      {/* Sound effects - click to preview */}
+      {effects.length > 0 && (
+        <div className="text-xs text-gray-500 flex flex-wrap gap-2">
+          <span>אפקטים:</span>
+          {effects.map((effect, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                const a = new Audio(effect.audioUrl);
+                a.volume = 0.5;
+                a.play();
+              }}
+              className="px-2 py-0.5 bg-night-700/50 hover:bg-night-600 rounded text-gray-400 hover:text-gold-400 transition-colors cursor-pointer"
+              title="לחץ להשמעה"
+            >
+              ▶ {effect.label} {effect.timestampSeconds !== null ? `(${formatTime(effect.timestampSeconds)})` : ""}
+            </button>
+          ))}
         </div>
       )}
     </div>

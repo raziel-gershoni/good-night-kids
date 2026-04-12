@@ -53,11 +53,26 @@ Example usage:
 IMPORTANT: Use 8-12 voice direction tags spread throughout the story.
 
 SOUND DESIGN SECTION:
-After the story, add this section for background ambient sound:
+After the story, add this section:
 
 ### עיצוב סאונד
 
-אווירה: [English description for ambient background. Must end with "instrumental only, absolutely no vocals, no singing, no humming, seamless loop". E.g.: "Gentle bedtime lullaby with soft piano, nighttime countryside sounds, soft breeze, calm atmosphere, instrumental only, absolutely no vocals, no singing, no humming, seamless loop"]`;
+אווירה: [English description for ambient background. Must end with "instrumental only, absolutely no vocals, no singing, no humming, seamless loop". E.g.: "Gentle bedtime lullaby with soft piano, nighttime countryside sounds, soft breeze, calm atmosphere, instrumental only, absolutely no vocals, no singing, no humming, seamless loop"]
+
+אפקטים:
+* [2-4 words exactly from the story, without nikud] - [short English physical sound description]
+* [2-4 words exactly from the story, without nikud] - [short English physical sound description]
+* [2-4 words exactly from the story, without nikud] - [short English physical sound description]
+* [2-4 words exactly from the story, without nikud] - [short English physical sound description]
+* [2-4 words exactly from the story, without nikud] - [short English physical sound description]
+* [2-4 words exactly from the story, without nikud] - [short English physical sound description]
+
+Effect rules:
+1. English descriptions only - fed to a sound effects model
+2. Only real physical sounds recordable with a microphone: "wooden door creaking", "sheep bleating", "river flowing", "bird singing", "footsteps on gravel", "wind through trees", "fire crackling"
+3. NO abstract sounds: not "sound of realization", not "magical feeling", not "emotional moment"
+4. The Hebrew quote must be exact words from the story above (without nikud) so we can find when they're spoken in the audio
+5. Choose 5-8 effects spread evenly throughout the story`;
 
 export async function generateStory(params: {
   originalText: string;

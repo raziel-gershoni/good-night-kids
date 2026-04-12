@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { SettingsBar } from "./settings-bar";
 import { SourceInput } from "./source-input";
 import { StepSection } from "./step-section";
-import { AudioPlayer } from "./audio-player";
+import { AudioPlayer, type SoundEffectData } from "./audio-player";
 import { StoryActions } from "./story-actions";
 import { SavedStoriesList } from "./saved-stories-list";
 import type { ClaudeModel, EffortLevel, SourceType, SavedStory } from "@/lib/types";
@@ -23,8 +23,9 @@ export function StoryWizard() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioBase64, setAudioBase64] = useState<string | null>(null);
 
-  // Ambient
+  // Sounds
   const [ambientUrl, setAmbientUrl] = useState<string | null>(null);
+  const [soundEffects, setSoundEffects] = useState<SoundEffectData[]>([]);
   const [isGeneratingAmbient, setIsGeneratingAmbient] = useState(false);
 
   // Loading states
@@ -58,6 +59,7 @@ export function StoryWizard() {
       setAudioUrl(null);
       setAudioBase64(null);
       setAmbientUrl(null);
+      setSoundEffects([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה ביצירת הסיפור");
     } finally {
@@ -113,19 +115,23 @@ export function StoryWizard() {
     }
   }, [childrenStory, voiceId]);
 
-  // Step 4: Generate ambient background
-  const generateAmbient = useCallback(async () => {
+  // Step 4: Generate ambient + sound effects
+  const generateSounds = useCallback(async () => {
     clearError();
     setIsGeneratingAmbient(true);
     try {
-      // Use the story text (before nikud) for sound design parsing
-      const scriptForParsing = childrenStory || ttsScript;
+      const formData = new FormData();
+      formData.append("storyText", childrenStory);
+      if (audioBase64) {
+        const audioBytes = Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0));
+        formData.append("narration", new Blob([audioBytes], { type: "audio/mpeg" }), "narration.mp3");
+      }
+
       const res = await fetch("/api/generate/sounds", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ttsScript: scriptForParsing }),
+        body: formData,
       });
-      if (!res.ok) throw new Error("Failed to generate ambient");
+      if (!res.ok) throw new Error("Failed to generate sounds");
       const data = await res.json();
 
       if (data.ambientBase64) {
@@ -135,12 +141,30 @@ export function StoryWizard() {
         );
         setAmbientUrl(URL.createObjectURL(ambientBlob));
       }
+
+      if (data.effects?.length) {
+        const efx: SoundEffectData[] = data.effects.map(
+          (e: { label: string; timestampSeconds: number | null; audioBase64: string }) => {
+            const blob = new Blob(
+              [Uint8Array.from(atob(e.audioBase64), (c) => c.charCodeAt(0))],
+              { type: data.mimeType }
+            );
+            return {
+              label: e.label,
+              timestampSeconds: e.timestampSeconds,
+              fallbackPosition: 0,
+              audioUrl: URL.createObjectURL(blob),
+            };
+          }
+        );
+        setSoundEffects(efx);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "שגיאה ביצירת אווירה");
+      setError(err instanceof Error ? err.message : "שגיאה ביצירת צלילים");
     } finally {
       setIsGeneratingAmbient(false);
     }
-  }, [childrenStory, ttsScript]);
+  }, [childrenStory, audioBase64]);
 
   const handleSaved = (id: string, slug: string) => {
     setCurrentStoryId(id);
@@ -236,7 +260,7 @@ export function StoryWizard() {
       >
         {audioUrl && !ambientUrl && (
           <button
-            onClick={generateAmbient}
+            onClick={generateSounds}
             disabled={isGeneratingAmbient}
             className="px-4 py-1.5 bg-night-700 hover:bg-night-600 disabled:bg-night-800 disabled:text-gray-600 text-sm text-gray-300 rounded-lg transition-colors flex items-center gap-2 border border-night-600/50"
           >
@@ -252,7 +276,7 @@ export function StoryWizard() {
         <AudioPlayer
           audioUrl={audioUrl}
           ambientUrl={ambientUrl}
-          effects={[]}
+          effects={soundEffects}
           isLoading={isGeneratingAudio}
         />
       </StepSection>

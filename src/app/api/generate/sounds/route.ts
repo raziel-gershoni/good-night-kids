@@ -1,24 +1,36 @@
 import { NextResponse } from "next/server";
-import {
-  generateAmbientSound,
-  parseAmbientPrompt,
-} from "@/lib/sounds/ambient";
+import { generateAllSounds } from "@/lib/sounds/ambient";
 
 export const maxDuration = 300;
 
 export async function POST(request: Request) {
   try {
-    const { ttsScript } = await request.json();
+    const formData = await request.formData();
+    const storyText = formData.get("storyText") as string;
+    const narrationFile = formData.get("narration") as File | null;
 
-    const ambientPrompt = parseAmbientPrompt(ttsScript) ||
-      "Gentle bedtime lullaby with soft piano, peaceful nighttime atmosphere, soft breeze, calm and soothing, instrumental only, absolutely no vocals, no singing, no humming, seamless loop";
+    if (!storyText) {
+      return NextResponse.json(
+        { error: "Missing story text" },
+        { status: 400 }
+      );
+    }
 
-    console.log("Generating ambient:", ambientPrompt.slice(0, 80));
+    // Convert narration file to base64 if provided
+    let narrationBase64: string | undefined;
+    if (narrationFile) {
+      const arrayBuffer = await narrationFile.arrayBuffer();
+      narrationBase64 = Buffer.from(arrayBuffer).toString("base64");
+      console.log("Narration size:", arrayBuffer.byteLength, "bytes");
+    }
 
-    const ambientBuffer = await generateAmbientSound(ambientPrompt);
+    const result = await generateAllSounds({
+      storyText,
+      narrationBase64,
+    });
 
     return NextResponse.json({
-      ambientBase64: ambientBuffer?.toString("base64") ?? null,
+      ...result,
       mimeType: "audio/mp3",
     });
   } catch (error) {
