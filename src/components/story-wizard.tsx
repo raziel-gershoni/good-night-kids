@@ -137,10 +137,15 @@ export function StoryWizard() {
     clearError();
     setIsGeneratingSounds(true);
     try {
+      const formData = new FormData();
+      formData.append("ttsScript", ttsScript);
+      if (audioBase64) {
+        const audioBytes = Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0));
+        formData.append("narration", new Blob([audioBytes], { type: "audio/wav" }), "narration.wav");
+      }
       const res = await fetch("/api/generate/sounds", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ttsScript, narrationBase64: audioBase64 }),
+        body: formData,
       });
       if (!res.ok) throw new Error("Failed to generate sounds");
       const data = await res.json();

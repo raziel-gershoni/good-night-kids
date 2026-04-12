@@ -72,24 +72,37 @@ export async function findEffectTimestamps(
   effectLabels: string[]
 ): Promise<Map<string, number>> {
   const ai = getGeminiClient();
+  const fs = await import("fs");
+  const os = await import("os");
+  const path = await import("path");
 
-  const labelList = effectLabels
-    .map((label, i) => `${i + 1}. "${label}"`)
-    .join("\n");
+  // Write audio to temp file for Gemini Files API upload
+  const tmpPath = path.join(os.tmpdir(), `narration-${Date.now()}.wav`);
+  fs.writeFileSync(tmpPath, Buffer.from(narrationBase64, "base64"));
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: [
-      {
-        parts: [
-          {
-            inlineData: {
-              mimeType: "audio/wav",
-              data: narrationBase64,
+  try {
+    const uploaded = await ai.files.upload({
+      file: tmpPath,
+      config: { mimeType: "audio/wav" },
+    });
+
+    const labelList = effectLabels
+      .map((label, i) => `${i + 1}. "${label}"`)
+      .join("\n");
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [
+        {
+          parts: [
+            {
+              fileData: {
+                fileUri: uploaded.uri!,
+                mimeType: uploaded.mimeType!,
+              },
             },
-          },
-          {
-            text: `Listen to this Hebrew audio narration carefully. For each phrase below, tell me the exact timestamp (in seconds) when it is spoken.
+            {
+              text: `Listen to this Hebrew audio narration carefully. For each phrase below, tell me the exact timestamp (in seconds) when it is spoken.
 
 ${labelList}
 
@@ -127,7 +140,11 @@ Give only the numbers, no other text.`,
     }
   }
 
-  return timestamps;
+    return timestamps;
+  } finally {
+    // Clean up temp file
+    try { fs.unlinkSync(tmpPath); } catch { /* ignore */ }
+  }
 }
 
 export interface SoundEffect {

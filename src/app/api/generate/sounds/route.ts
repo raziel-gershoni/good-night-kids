@@ -10,7 +10,9 @@ export const maxDuration = 180;
 
 export async function POST(request: Request) {
   try {
-    const { ttsScript, narrationBase64 } = await request.json();
+    const formData = await request.formData();
+    const ttsScript = formData.get("ttsScript") as string;
+    const narrationFile = formData.get("narration") as File | null;
 
     const soundDesign = parseSoundDesign(ttsScript);
     if (!soundDesign) {
@@ -25,13 +27,15 @@ export async function POST(request: Request) {
     console.log("Generating sounds:", {
       ambient: soundDesign.ambientPrompt.slice(0, 80),
       effects: effectsToGenerate.length,
-      hasNarration: !!narrationBase64,
+      hasNarration: !!narrationFile,
     });
 
-    // Step 1: Find exact timestamps via Gemini audio analysis (if narration provided)
+    // Step 1: Find exact timestamps via Gemini audio analysis
     let timestamps = new Map<string, number>();
-    if (narrationBase64 && effectsToGenerate.length > 0) {
+    if (narrationFile && effectsToGenerate.length > 0) {
       try {
+        const arrayBuffer = await narrationFile.arrayBuffer();
+        const narrationBase64 = Buffer.from(arrayBuffer).toString("base64");
         timestamps = await findEffectTimestamps(
           narrationBase64,
           effectsToGenerate.map((e) => e.label)
@@ -56,7 +60,6 @@ export async function POST(request: Request) {
       ambientBase64: ambientBuffer.toString("base64"),
       effects: effectsToGenerate.map((e, i) => ({
         label: e.label,
-        // Use Gemini timestamp if available, otherwise fall back to even distribution
         timestampSeconds: timestamps.get(e.label) ?? null,
         fallbackPosition: (i + 1) / (effectsToGenerate.length + 1),
         audioBase64: effectBuffers[i].toString("base64"),
