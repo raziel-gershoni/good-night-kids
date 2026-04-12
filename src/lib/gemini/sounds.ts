@@ -176,21 +176,42 @@ export function parseSoundDesign(ttsScript: string): SoundDesign | null {
 
   const soundSection = ttsScript.slice(soundIdx + soundMarker.length);
 
+  // Extract story text for position matching
+  const storyMarker = "## הסיפור";
+  const storyStart = ttsScript.indexOf(storyMarker);
+  const storyText = storyStart !== -1
+    ? ttsScript.slice(storyStart + storyMarker.length, soundIdx).trim()
+    : "";
+  const storyLength = storyText.length;
+
   const ambientMatch = soundSection.match(/אווירה:\s*(.+)/);
 
   console.log("Sound design section:", soundSection.slice(0, 500));
 
-  // Match: * [hebrew quote] - english description  OR  * hebrew quote - english description
+  // Match: * hebrew quote - english description
   const effectsRegex = /(?:\*|-|•)\s*(?:\[)?([^\]\-–—\n]+?)(?:\])?\s*[-–—]\s*(.+)/g;
   const effects: SoundEffect[] = [];
   let match;
+  let effectIndex = 0;
   while ((match = effectsRegex.exec(soundSection)) !== null) {
     const label = match[1].trim();
     const prompt = match[2].trim();
-    // Skip the note line
     if (label.startsWith("חוקי") || label.startsWith("הערה") || label.startsWith("תיאור")) continue;
 
-    effects.push({ label, prompt, position: 0 }); // position will be set by audio analysis
+    // Find label position in story text for timing
+    let position = (effectIndex + 1) / 10; // fallback: spread evenly
+    if (storyLength > 0) {
+      // Strip nikud for fuzzy matching
+      const cleanLabel = label.replace(/[\u0591-\u05C7]/g, "");
+      const cleanStory = storyText.replace(/[\u0591-\u05C7]/g, "");
+      const idx = cleanStory.indexOf(cleanLabel);
+      if (idx !== -1) {
+        position = idx / cleanStory.length;
+      }
+    }
+
+    effects.push({ label, prompt, position });
+    effectIndex++;
   }
 
   console.log(

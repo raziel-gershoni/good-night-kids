@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const effectsToGenerate = soundDesign.effects.slice(0, 6);
+    const effectsToGenerate = soundDesign.effects.slice(0, 10);
 
     console.log("Generating sounds:", {
       ambient: soundDesign.ambientPrompt.slice(0, 80),
