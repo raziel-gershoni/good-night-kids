@@ -137,15 +137,10 @@ export function StoryWizard() {
     clearError();
     setIsGeneratingSounds(true);
     try {
-      const formData = new FormData();
-      formData.append("ttsScript", ttsScript);
-      if (audioBase64) {
-        const audioBytes = Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0));
-        formData.append("narration", new Blob([audioBytes], { type: "audio/wav" }), "narration.wav");
-      }
       const res = await fetch("/api/generate/sounds", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ttsScript }),
       });
       if (!res.ok) throw new Error("Failed to generate sounds");
       const data = await res.json();
@@ -158,15 +153,15 @@ export function StoryWizard() {
       setAmbientUrl(URL.createObjectURL(ambientBlob));
 
       const effects: SoundEffectData[] = data.effects.map(
-        (e: { label: string; timestampSeconds: number | null; fallbackPosition: number; audioBase64: string }) => {
+        (e: { label: string; position: number; audioBase64: string }) => {
           const blob = new Blob(
             [Uint8Array.from(atob(e.audioBase64), (c) => c.charCodeAt(0))],
             { type: data.mimeType }
           );
           return {
             label: e.label,
-            timestampSeconds: e.timestampSeconds,
-            fallbackPosition: e.fallbackPosition,
+            timestampSeconds: null,
+            fallbackPosition: e.position,
             audioUrl: URL.createObjectURL(blob),
           };
         }
