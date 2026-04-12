@@ -20,8 +20,11 @@ export async function generateSpeech(params: {
       body: JSON.stringify({
         text: params.text,
         model_id: "eleven_v3",
+        language_code: "he",
         voice_settings: {
-          speed: 1.15,
+          stability: 0,
+          style: 1,
+          speed: 1.5,
         },
       }),
     }
