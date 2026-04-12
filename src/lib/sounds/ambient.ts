@@ -34,14 +34,14 @@ export async function generateAmbientSound(
       console.error(
         `ElevenLabs ambient error: ${response.status} - ${errorText}`
       );
-      return null;
+      throw new Error(`ElevenLabs ambient error: ${response.status} - ${errorText}`);
     }
 
     const arrayBuffer = await response.arrayBuffer();
     return Buffer.from(arrayBuffer);
   } catch (err) {
     console.error("Ambient generation error:", err);
-    return null;
+    throw err;
   }
 }
 
