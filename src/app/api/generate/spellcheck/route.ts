@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { spellcheckStory } from "@/lib/gemini/spellcheck";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   try {

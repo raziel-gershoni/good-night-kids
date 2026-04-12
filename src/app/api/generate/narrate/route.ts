@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { narrateStory } from "@/lib/gemini/narrate";
 
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   try {

@@ -6,7 +6,7 @@ import {
   findEffectTimestamps,
 } from "@/lib/gemini/sounds";
 
-export const maxDuration = 180;
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   try {

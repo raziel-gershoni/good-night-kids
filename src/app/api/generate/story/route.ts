@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { adaptToChildrenStory } from "@/lib/gemini/adapt";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   try {

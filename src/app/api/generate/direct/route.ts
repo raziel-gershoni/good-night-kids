@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { directStory } from "@/lib/gemini/direct";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   try {
