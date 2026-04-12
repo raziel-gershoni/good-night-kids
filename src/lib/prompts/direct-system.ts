@@ -65,7 +65,7 @@ Produce this structure:
 
 ### עיצוב סאונד
 
-אווירה: [תיאור באנגלית לצלילי אווירה ומוזיקת רקע מתאימים. חשוב: להוסיף "seamless loop" בסוף התיאור. למשל: "Gentle bedtime lullaby with soft piano, nighttime countryside sounds, crickets, soft breeze, calm and peaceful atmosphere, instrumental only, no vocals, seamless loop"]
+אווירה: [תיאור באנגלית לצלילי אווירה ומוזיקת רקע. חשוב: תמיד לסיים עם "instrumental only, absolutely no vocals, no singing, no humming, seamless loop". למשל: "Gentle bedtime lullaby with soft piano, nighttime countryside sounds, crickets, soft breeze, calm and peaceful atmosphere, instrumental only, absolutely no vocals, no singing, no humming, seamless loop"]
 אפקטים (כל אפקט כולל: ציטוט מדויק מהסיפור למעלה ללא ניקוד + תיאור צליל באנגלית):
 * [2-4 מילים בדיוק מהסיפור, ללא ניקוד] - [תיאור צליל פיזי ספציפי באנגלית]
 * [2-4 מילים בדיוק מהסיפור, ללא ניקוד] - [תיאור צליל פיזי ספציפי באנגלית]
@@ -80,8 +80,8 @@ Produce this structure:
 
 חוקי אפקטים:
 1. תיאורי האפקטים חייבים להיות באנגלית - הם מוזנים למודל יצירת אפקטים קוליים
-2. רק צלילים פיזיים ומוחשיים! דוגמאות טובות: "wooden door creaking open", "sheep bleating softly", "gentle river flowing", "bird singing a short melody", "thunder rumbling in the distance", "footsteps on gravel path"
-3. אסור צלילים מופשטים! לא "sound of realization", לא "magical feeling", לא "emotional moment" - רק דברים שאפשר לשמוע בעולם האמיתי
+2. רק צלילים שאפשר להקליט עם מיקרופון בעולם האמיתי! דוגמאות טובות: "wooden door creaking open", "sheep bleating softly", "gentle river flowing", "bird singing", "thunder rumbling", "footsteps on gravel", "wind blowing through trees", "fire crackling", "horse galloping", "rain falling gently"
+3. אסור בהחלט: "sound of realization", "magical feeling", "emotional moment", "sense of wonder", "feeling of peace", "moment of clarity", "tension building" - אלו לא צלילים! אם אי אפשר להקליט את זה עם מיקרופון - אסור להשתמש בזה
 4. כל תיאור קצר וספציפי - 3-8 מילים באנגלית
 5. הציטוט בעברית חייב להיות מילים שמופיעות בדיוק בסיפור למעלה, ללא ניקוד, כדי שנוכל למצוא את המיקום בטקסט
 6. יש לבחור 8-10 אפקטים מפוזרים באופן שווה לאורך כל הסיפור - מההתחלה ועד הסוף

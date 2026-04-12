@@ -25,7 +25,10 @@ export function AudioPlayer({
   isLoading,
 }: AudioPlayerProps) {
   const narrationRef = useRef<HTMLAudioElement>(null);
-  const ambientRef = useRef<HTMLAudioElement>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const ambientBufferRef = useRef<AudioBuffer | null>(null);
+  const ambientSourcesRef = useRef<{ source: AudioBufferSourceNode; gain: GainNode }[]>([]);
+  const ambientLoopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -34,7 +37,6 @@ export function AudioPlayer({
   const [isMixing, setIsMixing] = useState(false);
   const effectTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const playedEffectsRef = useRef<Set<number>>(new Set());
-  const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     setIsPlaying(false);
@@ -42,9 +44,21 @@ export function AudioPlayer({
     setDuration(0);
   }, [audioUrl]);
 
+  // Load ambient buffer when URL changes
   useEffect(() => {
-    if (ambientRef.current) ambientRef.current.volume = ambientVolume;
-  }, [ambientVolume]);
+    if (!ambientUrl) {
+      ambientBufferRef.current = null;
+      return;
+    }
+    const ctx = new AudioContext();
+    audioCtxRef.current = ctx;
+    fetch(ambientUrl)
+      .then(r => r.arrayBuffer())
+      .then(ab => ctx.decodeAudioData(ab))
+      .then(buf => { ambientBufferRef.current = buf; })
+      .catch(() => { ambientBufferRef.current = null; });
+    return () => { ctx.close(); audioCtxRef.current = null; };
+  }, [ambientUrl]);
 
   function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60);
@@ -84,45 +98,78 @@ export function AudioPlayer({
     effectTimeoutsRef.current = [];
   }
 
-  function fadeOutAmbient() {
-    if (!ambientRef.current) return;
-    const startVolume = ambientRef.current.volume;
-    const steps = 20;
-    const stepDuration = (FADEOUT_DURATION * 1000) / steps;
-    let step = 0;
+  const CROSSFADE = 2; // seconds
 
-    fadeIntervalRef.current = setInterval(() => {
-      step++;
-      if (!ambientRef.current || step >= steps) {
-        if (ambientRef.current) {
-          ambientRef.current.pause();
-          ambientRef.current.volume = ambientVolume;
-        }
-        if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-        return;
+  function startAmbientLoop() {
+    const ctx = audioCtxRef.current;
+    const buffer = ambientBufferRef.current;
+    if (!ctx || !buffer) return;
+
+    function playOnce() {
+      const source = ctx!.createBufferSource();
+      source.buffer = buffer;
+      const gain = ctx!.createGain();
+      gain.gain.setValueAtTime(0, ctx!.currentTime);
+      gain.gain.linearRampToValueAtTime(ambientVolume, ctx!.currentTime + CROSSFADE);
+      // Fade out before end
+      const fadeOutStart = buffer!.duration - CROSSFADE;
+      if (fadeOutStart > CROSSFADE) {
+        gain.gain.setValueAtTime(ambientVolume, ctx!.currentTime + fadeOutStart);
+        gain.gain.linearRampToValueAtTime(0, ctx!.currentTime + buffer!.duration);
       }
-      ambientRef.current.volume = startVolume * (1 - step / steps);
-    }, stepDuration);
+      source.connect(gain).connect(ctx!.destination);
+      source.start();
+      ambientSourcesRef.current.push({ source, gain });
+
+      // Schedule next copy with overlap
+      const nextDelay = (buffer!.duration - CROSSFADE) * 1000;
+      ambientLoopTimerRef.current = setTimeout(playOnce, Math.max(nextDelay, 1000));
+    }
+
+    playOnce();
+  }
+
+  function stopAmbientLoop() {
+    if (ambientLoopTimerRef.current) {
+      clearTimeout(ambientLoopTimerRef.current);
+      ambientLoopTimerRef.current = null;
+    }
+    for (const { source } of ambientSourcesRef.current) {
+      try { source.stop(); } catch { /* already stopped */ }
+    }
+    ambientSourcesRef.current = [];
+  }
+
+  function fadeOutAmbient() {
+    const ctx = audioCtxRef.current;
+    if (!ctx) { stopAmbientLoop(); return; }
+    // Stop scheduling new loops
+    if (ambientLoopTimerRef.current) {
+      clearTimeout(ambientLoopTimerRef.current);
+      ambientLoopTimerRef.current = null;
+    }
+    // Fade out all active sources
+    for (const { source, gain } of ambientSourcesRef.current) {
+      try {
+        gain.gain.cancelScheduledValues(ctx.currentTime);
+        gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + FADEOUT_DURATION);
+        source.stop(ctx.currentTime + FADEOUT_DURATION);
+      } catch { /* already stopped */ }
+    }
+    setTimeout(() => { ambientSourcesRef.current = []; }, FADEOUT_DURATION * 1000);
   }
 
   function togglePlay() {
     if (!narrationRef.current) return;
-    if (fadeIntervalRef.current) {
-      clearInterval(fadeIntervalRef.current);
-      fadeIntervalRef.current = null;
-    }
 
     if (isPlaying) {
       narrationRef.current.pause();
-      ambientRef.current?.pause();
+      stopAmbientLoop();
       clearScheduledEffects();
     } else {
       narrationRef.current.play();
-      if (ambientRef.current) {
-        ambientRef.current.volume = ambientVolume;
-        ambientRef.current.currentTime = 0;
-        ambientRef.current.play();
-      }
+      startAmbientLoop();
       scheduleEffects();
     }
     setIsPlaying(!isPlaying);
@@ -139,9 +186,7 @@ export function AudioPlayer({
   function handleNarrationEnded() {
     setIsPlaying(false);
     clearScheduledEffects();
-    if (ambientRef.current) {
-      fadeOutAmbient();
-    }
+    fadeOutAmbient();
   }
 
   const handleDownload = useCallback(async () => {
@@ -277,7 +322,7 @@ export function AudioPlayer({
         }
         onEnded={handleNarrationEnded}
       />
-      {ambientUrl && <audio ref={ambientRef} src={ambientUrl} loop />}
+      {/* Ambient uses Web Audio API crossfade loop - no <audio> tag */}
 
       {/* Main controls */}
       <div className="flex items-center gap-4">

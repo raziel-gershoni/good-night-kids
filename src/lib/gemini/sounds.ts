@@ -179,9 +179,13 @@ export function parseSoundDesign(ttsScript: string): SoundDesign | null {
   // Extract story text for position matching
   const storyMarker = "## הסיפור";
   const storyStart = ttsScript.indexOf(storyMarker);
-  const storyText = storyStart !== -1
+  const rawStoryText = storyStart !== -1
     ? ttsScript.slice(storyStart + storyMarker.length, soundIdx).trim()
     : "";
+  // Strip inline voice cues [...]  and nikud for position matching
+  const storyText = rawStoryText
+    .replace(/\[.*?\]/g, "")
+    .replace(/[\u0591-\u05C7]/g, "");
   const storyLength = storyText.length;
 
   const ambientMatch = soundSection.match(/אווירה:\s*(.+)/);
