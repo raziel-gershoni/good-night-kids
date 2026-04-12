@@ -26,23 +26,27 @@ export async function POST(request: Request) {
       effects: effectsToGenerate.length,
     });
 
-    // Generate ambient
+    // Generate ambient (may fail - non-blocking)
     const ambientBuffer = await generateAmbientSound(soundDesign.ambientPrompt);
 
     // Generate effects sequentially (ElevenLabs rate limit)
-    const effectBuffers: Buffer[] = [];
+    const effectResults: { label: string; position: number; audioBase64: string }[] = [];
     for (const e of effectsToGenerate) {
-      const buf = await generateSoundEffect(e.prompt);
-      effectBuffers.push(buf);
+      try {
+        const buf = await generateSoundEffect(e.prompt);
+        effectResults.push({
+          label: e.label,
+          position: e.position,
+          audioBase64: buf.toString("base64"),
+        });
+      } catch (err) {
+        console.error(`Effect "${e.label}" failed:`, err);
+      }
     }
 
     return NextResponse.json({
-      ambientBase64: ambientBuffer.toString("base64"),
-      effects: effectsToGenerate.map((e, i) => ({
-        label: e.label,
-        position: e.position,
-        audioBase64: effectBuffers[i].toString("base64"),
-      })),
+      ambientBase64: ambientBuffer?.toString("base64") ?? null,
+      effects: effectResults,
       mimeType: "audio/mp3",
     });
   } catch (error) {

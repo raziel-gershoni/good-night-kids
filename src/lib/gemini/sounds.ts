@@ -1,26 +1,37 @@
 import { getGeminiClient } from "./client";
 
 // Lyria 3 for ambient/music loops
-async function generateLyriaClip(prompt: string): Promise<Buffer> {
+async function generateLyriaClip(prompt: string): Promise<Buffer | null> {
   const ai = getGeminiClient();
 
-  const response = await ai.models.generateContent({
-    model: "lyria-3-clip-preview",
-    contents: prompt,
-  });
+  try {
+    const response = await ai.models.generateContent({
+      model: "lyria-3-clip-preview",
+      contents: prompt,
+    });
 
-  const candidate = response.candidates?.[0];
-  if (!candidate?.content?.parts) {
-    throw new Error("No audio data from Lyria 3");
-  }
+    const candidate = response.candidates?.[0];
+    console.log("Lyria 3 response parts:", candidate?.content?.parts?.map(p =>
+      p.inlineData ? `audio:${p.inlineData.mimeType}:${p.inlineData.data?.length}chars` : `text:${p.text?.slice(0, 100)}`
+    ));
 
-  for (const part of candidate.content.parts) {
-    if (part.inlineData?.data) {
-      return Buffer.from(part.inlineData.data, "base64");
+    if (!candidate?.content?.parts) {
+      console.error("Lyria 3: no parts in response");
+      return null;
     }
-  }
 
-  throw new Error("No audio data in Lyria 3 response");
+    for (const part of candidate.content.parts) {
+      if (part.inlineData?.data) {
+        return Buffer.from(part.inlineData.data, "base64");
+      }
+    }
+
+    console.error("Lyria 3: no inlineData found in parts");
+    return null;
+  } catch (err) {
+    console.error("Lyria 3 error:", err);
+    return null;
+  }
 }
 
 // ElevenLabs for actual sound effects
@@ -58,7 +69,7 @@ async function generateElevenLabsSfx(
   return Buffer.from(arrayBuffer);
 }
 
-export async function generateAmbientSound(prompt: string): Promise<Buffer> {
+export async function generateAmbientSound(prompt: string): Promise<Buffer | null> {
   return generateLyriaClip(prompt);
 }
 

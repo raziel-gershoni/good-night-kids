@@ -146,11 +146,13 @@ export function StoryWizard() {
       const data = await res.json();
 
       // Convert base64 to blob URLs
-      const ambientBlob = new Blob(
-        [Uint8Array.from(atob(data.ambientBase64), (c) => c.charCodeAt(0))],
-        { type: data.mimeType }
-      );
-      setAmbientUrl(URL.createObjectURL(ambientBlob));
+      if (data.ambientBase64) {
+        const ambientBlob = new Blob(
+          [Uint8Array.from(atob(data.ambientBase64), (c) => c.charCodeAt(0))],
+          { type: data.mimeType }
+        );
+        setAmbientUrl(URL.createObjectURL(ambientBlob));
+      }
 
       const effects: SoundEffectData[] = data.effects.map(
         (e: { label: string; position: number; audioBase64: string }) => {
