@@ -41,11 +41,16 @@ export function AudioPlayer({
   }, [ambientVolume]);
 
   // Auto-start ambient if narration is already playing
+  // Use a small delay so the <audio> tag has time to mount after ambientUrl changes
   useEffect(() => {
-    if (ambientUrl && ambientRef.current && isPlaying) {
-      ambientRef.current.volume = ambientVolume;
-      ambientRef.current.play().catch(() => {});
-    }
+    if (!ambientUrl || !isPlaying) return;
+    const timer = setTimeout(() => {
+      if (ambientRef.current) {
+        ambientRef.current.volume = ambientVolume;
+        ambientRef.current.play().catch(() => {});
+      }
+    }, 100);
+    return () => clearTimeout(timer);
   }, [ambientUrl, isPlaying, ambientVolume]);
 
   function formatTime(seconds: number): string {
