@@ -22,8 +22,9 @@ export async function generateAmbientSound(
         },
         body: JSON.stringify({
           text: prompt,
-          duration_seconds: 20,
+          duration_seconds: 22,
           loop: true,
+          model_id: "eleven_text_to_sound_v2",
         }),
       }
     );
