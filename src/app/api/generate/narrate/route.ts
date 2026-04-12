@@ -14,8 +14,13 @@ export async function POST(request: Request) {
       );
     }
 
+    // Strip sound design section before sending to TTS
+    const soundMarker = "### עיצוב סאונד";
+    const soundIdx = ttsScript.indexOf(soundMarker);
+    const textForTts = soundIdx !== -1 ? ttsScript.slice(0, soundIdx).trim() : ttsScript;
+
     const audioBuffer = await generateSpeech({
-      text: ttsScript,
+      text: textForTts,
       voiceId: voiceId || "JiKFunrRggP9Jl3AcoUw", // Rachel default
     });
 

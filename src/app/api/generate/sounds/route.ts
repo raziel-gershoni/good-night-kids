@@ -10,13 +10,8 @@ export async function POST(request: Request) {
   try {
     const { ttsScript } = await request.json();
 
-    const ambientPrompt = parseAmbientPrompt(ttsScript);
-    if (!ambientPrompt) {
-      return NextResponse.json(
-        { error: "No sound design section found" },
-        { status: 400 }
-      );
-    }
+    const ambientPrompt = parseAmbientPrompt(ttsScript) ||
+      "Gentle bedtime lullaby with soft piano, peaceful nighttime atmosphere, soft breeze, calm and soothing, instrumental only, absolutely no vocals, no singing, no humming, seamless loop";
 
     console.log("Generating ambient:", ambientPrompt.slice(0, 80));
 
