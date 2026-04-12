@@ -12,6 +12,15 @@ export async function generateAmbientSound(
   }
 
   try {
+    console.log("Calling ElevenLabs SFX API...");
+    const body = {
+      text: prompt,
+      duration_seconds: 22,
+      loop: true,
+      model_id: "eleven_text_to_sound_v2",
+    };
+    console.log("Request body:", JSON.stringify(body).slice(0, 200));
+
     const response = await fetch(
       "https://api.elevenlabs.io/v1/sound-generation",
       {
@@ -20,24 +29,20 @@ export async function generateAmbientSound(
           "xi-api-key": apiKey,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          text: prompt,
-          duration_seconds: 22,
-          loop: true,
-          model_id: "eleven_text_to_sound_v2",
-        }),
+        body: JSON.stringify(body),
       }
     );
 
+    console.log("ElevenLabs SFX response status:", response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(
-        `ElevenLabs ambient error: ${response.status} - ${errorText}`
-      );
+      console.error(`ElevenLabs ambient error: ${response.status} - ${errorText}`);
       throw new Error(`ElevenLabs ambient error: ${response.status} - ${errorText}`);
     }
 
     const arrayBuffer = await response.arrayBuffer();
+    console.log("Ambient audio received:", arrayBuffer.byteLength, "bytes");
     return Buffer.from(arrayBuffer);
   } catch (err) {
     console.error("Ambient generation error:", err);
