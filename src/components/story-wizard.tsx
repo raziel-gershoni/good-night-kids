@@ -65,7 +65,7 @@ export function StoryWizard() {
     }
   }, [originalText, sourceType, model, effort]);
 
-  // Step 2: Vocalize with Dicta Nakdan (add nikud, preserve audio tags)
+  // Optional: Vocalize with Dicta Nakdan (replaces story text in-place)
   const vocalize = useCallback(async () => {
     clearError();
     setIsVocalizing(true);
@@ -80,10 +80,7 @@ export function StoryWizard() {
         throw new Error(data.error || "Failed to vocalize");
       }
       const data = await res.json();
-      setTtsScript(data.ttsScript);
-      setAudioUrl(null);
-      setAudioBase64(null);
-      setAmbientUrl(null);
+      setChildrenStory(data.ttsScript); // Replace story text in-place
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה בניקוד הטקסט");
     } finally {
@@ -91,7 +88,7 @@ export function StoryWizard() {
     }
   }, [childrenStory]);
 
-  // Step 3: Narrate with ElevenLabs v3
+  // Step 2: Narrate with ElevenLabs v3
   const generateAudio = useCallback(async () => {
     clearError();
     setIsGeneratingAudio(true);
@@ -99,7 +96,7 @@ export function StoryWizard() {
       const res = await fetch("/api/generate/narrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ttsScript, voiceId }),
+        body: JSON.stringify({ ttsScript: childrenStory, voiceId }),
       });
       if (!res.ok) throw new Error("Failed to generate audio");
       const data = await res.json();
@@ -114,7 +111,7 @@ export function StoryWizard() {
     } finally {
       setIsGeneratingAudio(false);
     }
-  }, [ttsScript, voiceId]);
+  }, [childrenStory, voiceId]);
 
   // Step 4: Generate ambient background
   const generateAmbient = useCallback(async () => {
@@ -209,25 +206,30 @@ export function StoryWizard() {
         onGenerate={generateStory}
         value={childrenStory}
         onChange={setChildrenStory}
-      />
+      >
+        {childrenStory && (
+          <button
+            onClick={vocalize}
+            disabled={isVocalizing}
+            className="px-4 py-1.5 bg-night-700 hover:bg-night-600 disabled:bg-night-800 disabled:text-gray-600 text-sm text-gray-300 rounded-lg transition-colors flex items-center gap-2 border border-night-600/50"
+          >
+            {isVocalizing && (
+              <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            )}
+            {isVocalizing ? "מנקד..." : "הוסף ניקוד (אופציונלי)"}
+          </button>
+        )}
+      </StepSection>
 
       <StepSection
         stepNumber={2}
-        title="ניקוד"
-        buttonLabel="הוסף ניקוד"
-        isLoading={isVocalizing}
-        isDisabled={!childrenStory.trim()}
-        onGenerate={vocalize}
-        value={ttsScript}
-        onChange={setTtsScript}
-      />
-
-      <StepSection
-        stepNumber={3}
         title="הקראה"
         buttonLabel="הקרא את הסיפור"
         isLoading={isGeneratingAudio}
-        isDisabled={!ttsScript.trim()}
+        isDisabled={!childrenStory.trim()}
         onGenerate={generateAudio}
         value=""
         onChange={() => {}}

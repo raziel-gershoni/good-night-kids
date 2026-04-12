@@ -20,6 +20,9 @@ export async function generateSpeech(params: {
       body: JSON.stringify({
         text: params.text,
         model_id: "eleven_v3",
+        voice_settings: {
+          speed: 1.15,
+        },
       }),
     }
   );
