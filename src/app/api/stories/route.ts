@@ -33,9 +33,9 @@ export async function POST(request: Request) {
       childrenStory: body.childrenStory,
       ttsScript: body.ttsScript,
       audioData,
-      audioMimeType: audioData ? "audio/wav" : undefined,
-      model: body.model || "gemini-3.1-flash-lite-preview",
-      thinkingLevel: body.thinkingLevel,
+      audioMimeType: audioData ? "audio/mpeg" : undefined,
+      model: body.model || "claude-sonnet-4-6",
+      thinkingLevel: body.effort || body.thinkingLevel,
       title: body.title,
     });
 

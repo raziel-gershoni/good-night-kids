@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { adaptToChildrenStory } from "@/lib/gemini/adapt";
+import { generateStory } from "@/lib/claude/generate-story";
 
 export const maxDuration = 300;
 
 export async function POST(request: Request) {
   try {
-    const { originalText, sourceType, model, thinkingLevel } =
-      await request.json();
+    const { originalText, sourceType, model, effort } = await request.json();
 
     if (!originalText?.trim()) {
       return NextResponse.json(
@@ -15,11 +14,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const childrenStory = await adaptToChildrenStory({
+    const childrenStory = await generateStory({
       originalText,
       sourceType: sourceType || "other",
-      model: model || "gemini-3.1-flash-lite-preview",
-      thinkingLevel: thinkingLevel || "none",
+      model: model || "claude-sonnet-4-6",
+      effort: effort || "high",
     });
 
     return NextResponse.json({ childrenStory });

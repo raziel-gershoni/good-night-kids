@@ -1,28 +1,28 @@
 "use client";
 
 import {
-  GEMINI_MODELS,
-  THINKING_LEVELS,
+  CLAUDE_MODELS,
+  EFFORT_LEVELS,
   TTS_VOICES,
-  type GeminiModel,
-  type ThinkingLevel,
+  type ClaudeModel,
+  type EffortLevel,
 } from "@/lib/types";
 
 interface SettingsBarProps {
-  model: GeminiModel;
-  thinkingLevel: ThinkingLevel;
-  voiceName: string;
-  onModelChange: (model: GeminiModel) => void;
-  onThinkingLevelChange: (level: ThinkingLevel) => void;
-  onVoiceChange: (voice: string) => void;
+  model: ClaudeModel;
+  effort: EffortLevel;
+  voiceId: string;
+  onModelChange: (model: ClaudeModel) => void;
+  onEffortChange: (effort: EffortLevel) => void;
+  onVoiceChange: (voiceId: string) => void;
 }
 
 export function SettingsBar({
   model,
-  thinkingLevel,
-  voiceName,
+  effort,
+  voiceId,
   onModelChange,
-  onThinkingLevelChange,
+  onEffortChange,
   onVoiceChange,
 }: SettingsBarProps) {
   return (
@@ -36,10 +36,10 @@ export function SettingsBar({
         <select
           id="model"
           value={model}
-          onChange={(e) => onModelChange(e.target.value as GeminiModel)}
+          onChange={(e) => onModelChange(e.target.value as ClaudeModel)}
           className="bg-night-700 border border-night-600/50 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-gold-400"
         >
-          {GEMINI_MODELS.map((m) => (
+          {CLAUDE_MODELS.map((m) => (
             <option key={m.value} value={m.value}>
               {m.label}
             </option>
@@ -48,20 +48,18 @@ export function SettingsBar({
       </div>
 
       <div className="flex items-center gap-2">
-        <label htmlFor="thinking" className="text-sm text-gray-300">
+        <label htmlFor="effort" className="text-sm text-gray-300">
           חשיבה:
         </label>
         <select
-          id="thinking"
-          value={thinkingLevel}
-          onChange={(e) =>
-            onThinkingLevelChange(e.target.value as ThinkingLevel)
-          }
+          id="effort"
+          value={effort}
+          onChange={(e) => onEffortChange(e.target.value as EffortLevel)}
           className="bg-night-700 border border-night-600/50 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-gold-400"
         >
-          {THINKING_LEVELS.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
+          {EFFORT_LEVELS.map((e) => (
+            <option key={e.value} value={e.value}>
+              {e.label}
             </option>
           ))}
         </select>
@@ -73,7 +71,7 @@ export function SettingsBar({
         </label>
         <select
           id="voice"
-          value={voiceName}
+          value={voiceId}
           onChange={(e) => onVoiceChange(e.target.value)}
           className="bg-night-700 border border-night-600/50 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-gold-400"
         >

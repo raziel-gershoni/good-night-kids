@@ -4,34 +4,32 @@ import { useState, useCallback } from "react";
 import { SettingsBar } from "./settings-bar";
 import { SourceInput } from "./source-input";
 import { StepSection } from "./step-section";
-import { AudioPlayer, type SoundEffectData } from "./audio-player";
+import { AudioPlayer } from "./audio-player";
 import { StoryActions } from "./story-actions";
 import { SavedStoriesList } from "./saved-stories-list";
-import type { GeminiModel, ThinkingLevel, SourceType, SavedStory } from "@/lib/types";
+import type { ClaudeModel, EffortLevel, SourceType, SavedStory } from "@/lib/types";
 
 export function StoryWizard() {
   // Settings
-  const [model, setModel] = useState<GeminiModel>("gemini-3.1-flash-lite-preview");
-  const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>("none");
-  const [voiceName, setVoiceName] = useState("Aoede");
+  const [model, setModel] = useState<ClaudeModel>("claude-sonnet-4-6");
+  const [effort, setEffort] = useState<EffortLevel>("high");
+  const [voiceId, setVoiceId] = useState("21m00Tcm4TlvDq8ikWAM");
   const [sourceType, setSourceType] = useState<SourceType>("tanakh");
 
   // Content
   const [originalText, setOriginalText] = useState("");
   const [childrenStory, setChildrenStory] = useState("");
-  const [ttsScript, setTtsScript] = useState("");
+  const [ttsScript, setTtsScript] = useState(""); // vocalized story with nikud
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioBase64, setAudioBase64] = useState<string | null>(null);
 
-  // Sound design
+  // Ambient
   const [ambientUrl, setAmbientUrl] = useState<string | null>(null);
-  const [soundEffects, setSoundEffects] = useState<SoundEffectData[]>([]);
-  const [isGeneratingSounds, setIsGeneratingSounds] = useState(false);
+  const [isGeneratingAmbient, setIsGeneratingAmbient] = useState(false);
 
   // Loading states
   const [isGeneratingStory, setIsGeneratingStory] = useState(false);
-  const [isSpellchecking, setIsSpellchecking] = useState(false);
-  const [isGeneratingDirections, setIsGeneratingDirections] = useState(false);
+  const [isVocalizing, setIsVocalizing] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
 
   // Saved story state
@@ -43,6 +41,7 @@ export function StoryWizard() {
 
   const clearError = () => setError(null);
 
+  // Step 1: Generate story with Claude (story + audio tags + sound design)
   const generateStory = useCallback(async () => {
     clearError();
     setIsGeneratingStory(true);
@@ -50,7 +49,7 @@ export function StoryWizard() {
       const res = await fetch("/api/generate/story", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ originalText, sourceType, model, thinkingLevel }),
+        body: JSON.stringify({ originalText, sourceType, model, effort }),
       });
       if (!res.ok) throw new Error("Failed to generate story");
       const data = await res.json();
@@ -58,57 +57,41 @@ export function StoryWizard() {
       setTtsScript("");
       setAudioUrl(null);
       setAudioBase64(null);
-            setAmbientUrl(null);
-      setSoundEffects([]);
+      setAmbientUrl(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה ביצירת הסיפור");
     } finally {
       setIsGeneratingStory(false);
     }
-  }, [originalText, sourceType, model, thinkingLevel]);
+  }, [originalText, sourceType, model, effort]);
 
-  const spellcheck = useCallback(async () => {
+  // Step 2: Vocalize with Dicta Nakdan (add nikud, preserve audio tags)
+  const vocalize = useCallback(async () => {
     clearError();
-    setIsSpellchecking(true);
-    try {
-      const res = await fetch("/api/generate/spellcheck", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ childrenStory, model, thinkingLevel }),
-      });
-      if (!res.ok) throw new Error("Failed to spellcheck");
-      const data = await res.json();
-      setChildrenStory(data.correctedStory);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "שגיאה בבדיקת דקדוק");
-    } finally {
-      setIsSpellchecking(false);
-    }
-  }, [childrenStory, model, thinkingLevel]);
-
-  const generateDirections = useCallback(async () => {
-    clearError();
-    setIsGeneratingDirections(true);
+    setIsVocalizing(true);
     try {
       const res = await fetch("/api/generate/direct", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ childrenStory, model, thinkingLevel }),
+        body: JSON.stringify({ childrenStory }),
       });
-      if (!res.ok) throw new Error("Failed to generate directions");
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to vocalize");
+      }
       const data = await res.json();
       setTtsScript(data.ttsScript);
       setAudioUrl(null);
       setAudioBase64(null);
-            setAmbientUrl(null);
-      setSoundEffects([]);
+      setAmbientUrl(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "שגיאה ביצירת ההנחיות");
+      setError(err instanceof Error ? err.message : "שגיאה בניקוד הטקסט");
     } finally {
-      setIsGeneratingDirections(false);
+      setIsVocalizing(false);
     }
-  }, [childrenStory, model, thinkingLevel]);
+  }, [childrenStory]);
 
+  // Step 3: Narrate with ElevenLabs v3
   const generateAudio = useCallback(async () => {
     clearError();
     setIsGeneratingAudio(true);
@@ -116,7 +99,7 @@ export function StoryWizard() {
       const res = await fetch("/api/generate/narrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ttsScript, voiceName }),
+        body: JSON.stringify({ ttsScript, voiceId }),
       });
       if (!res.ok) throw new Error("Failed to generate audio");
       const data = await res.json();
@@ -131,21 +114,23 @@ export function StoryWizard() {
     } finally {
       setIsGeneratingAudio(false);
     }
-  }, [ttsScript, voiceName]);
+  }, [ttsScript, voiceId]);
 
-  const generateSounds = useCallback(async () => {
+  // Step 4: Generate ambient background
+  const generateAmbient = useCallback(async () => {
     clearError();
-    setIsGeneratingSounds(true);
+    setIsGeneratingAmbient(true);
     try {
+      // Use the story text (before nikud) for sound design parsing
+      const scriptForParsing = childrenStory || ttsScript;
       const res = await fetch("/api/generate/sounds", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ttsScript }),
+        body: JSON.stringify({ ttsScript: scriptForParsing }),
       });
-      if (!res.ok) throw new Error("Failed to generate sounds");
+      if (!res.ok) throw new Error("Failed to generate ambient");
       const data = await res.json();
 
-      // Convert base64 to blob URLs
       if (data.ambientBase64) {
         const ambientBlob = new Blob(
           [Uint8Array.from(atob(data.ambientBase64), (c) => c.charCodeAt(0))],
@@ -153,28 +138,12 @@ export function StoryWizard() {
         );
         setAmbientUrl(URL.createObjectURL(ambientBlob));
       }
-
-      const effects: SoundEffectData[] = data.effects.map(
-        (e: { label: string; position: number; audioBase64: string }) => {
-          const blob = new Blob(
-            [Uint8Array.from(atob(e.audioBase64), (c) => c.charCodeAt(0))],
-            { type: data.mimeType }
-          );
-          return {
-            label: e.label,
-            timestampSeconds: null,
-            fallbackPosition: e.position,
-            audioUrl: URL.createObjectURL(blob),
-          };
-        }
-      );
-      setSoundEffects(effects);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "שגיאה ביצירת צלילים");
+      setError(err instanceof Error ? err.message : "שגיאה ביצירת אווירה");
     } finally {
-      setIsGeneratingSounds(false);
+      setIsGeneratingAmbient(false);
     }
-  }, [ttsScript, audioBase64]);
+  }, [childrenStory, ttsScript]);
 
   const handleSaved = (id: string, slug: string) => {
     setCurrentStoryId(id);
@@ -188,10 +157,8 @@ export function StoryWizard() {
     setTtsScript(story.ttsScript || "");
     setCurrentStoryId(story.id);
     setCurrentSlug(story.slug);
-    setModel((story.model as GeminiModel) || "gemini-3.1-flash-lite-preview");
-    setThinkingLevel((story.thinkingLevel as ThinkingLevel) || "none");
-        setAmbientUrl(null);
-    setSoundEffects([]);
+    setModel((story.model as ClaudeModel) || "claude-sonnet-4-6");
+    setAmbientUrl(null);
 
     if (story.hasAudio) {
       try {
@@ -201,7 +168,7 @@ export function StoryWizard() {
           setAudioUrl(URL.createObjectURL(blob));
         }
       } catch {
-        // Audio load failed, continue without it
+        // Audio load failed
       }
     } else {
       setAudioUrl(null);
@@ -213,11 +180,11 @@ export function StoryWizard() {
     <div className="space-y-6">
       <SettingsBar
         model={model}
-        thinkingLevel={thinkingLevel}
-        voiceName={voiceName}
+        effort={effort}
+        voiceId={voiceId}
         onModelChange={setModel}
-        onThinkingLevelChange={setThinkingLevel}
-        onVoiceChange={setVoiceName}
+        onEffortChange={setEffort}
+        onVoiceChange={setVoiceId}
       />
 
       <SourceInput
@@ -236,44 +203,28 @@ export function StoryWizard() {
       <StepSection
         stepNumber={1}
         title="סיפור ילדים"
-        buttonLabel="המר לסיפור"
+        buttonLabel="צור סיפור"
         isLoading={isGeneratingStory}
         isDisabled={!originalText.trim()}
         onGenerate={generateStory}
         value={childrenStory}
         onChange={setChildrenStory}
-      >
-        {childrenStory && (
-          <button
-            onClick={spellcheck}
-            disabled={isSpellchecking}
-            className="px-4 py-1.5 bg-night-700 hover:bg-night-600 disabled:bg-night-800 disabled:text-gray-600 text-sm text-gray-300 rounded-lg transition-colors flex items-center gap-2 border border-night-600/50"
-          >
-            {isSpellchecking && (
-              <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            )}
-            {isSpellchecking ? "בודק..." : "בדוק דקדוק"}
-          </button>
-        )}
-      </StepSection>
+      />
 
       <StepSection
         stepNumber={2}
-        title="הנחיות הקראה"
-        buttonLabel="הכן להקראה"
-        isLoading={isGeneratingDirections}
+        title="ניקוד"
+        buttonLabel="הוסף ניקוד"
+        isLoading={isVocalizing}
         isDisabled={!childrenStory.trim()}
-        onGenerate={generateDirections}
+        onGenerate={vocalize}
         value={ttsScript}
         onChange={setTtsScript}
       />
 
       <StepSection
         stepNumber={3}
-        title="הקראה וצלילים"
+        title="הקראה"
         buttonLabel="הקרא את הסיפור"
         isLoading={isGeneratingAudio}
         isDisabled={!ttsScript.trim()}
@@ -283,23 +234,23 @@ export function StoryWizard() {
       >
         {audioUrl && !ambientUrl && (
           <button
-            onClick={generateSounds}
-            disabled={isGeneratingSounds}
+            onClick={generateAmbient}
+            disabled={isGeneratingAmbient}
             className="px-4 py-1.5 bg-night-700 hover:bg-night-600 disabled:bg-night-800 disabled:text-gray-600 text-sm text-gray-300 rounded-lg transition-colors flex items-center gap-2 border border-night-600/50"
           >
-            {isGeneratingSounds && (
+            {isGeneratingAmbient && (
               <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
             )}
-            {isGeneratingSounds ? "מייצר צלילים..." : "ייצר מוזיקה ואווירה"}
+            {isGeneratingAmbient ? "מייצר אווירה..." : "ייצר אווירה"}
           </button>
         )}
         <AudioPlayer
           audioUrl={audioUrl}
           ambientUrl={ambientUrl}
-          effects={soundEffects}
+          effects={[]}
           isLoading={isGeneratingAudio}
         />
       </StepSection>
@@ -313,8 +264,8 @@ export function StoryWizard() {
           childrenStory: childrenStory || undefined,
           ttsScript: ttsScript || undefined,
           model,
-          thinkingLevel,
-          voiceName,
+          effort,
+          voiceId,
         }}
         audioBase64={audioBase64}
         onSaved={handleSaved}

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { narrateStory } from "@/lib/gemini/narrate";
+import { generateSpeech } from "@/lib/tts/elevenlabs";
 
 export const maxDuration = 300;
 
 export async function POST(request: Request) {
   try {
-    const { ttsScript, voiceName } = await request.json();
+    const { ttsScript, voiceId } = await request.json();
 
     if (!ttsScript?.trim()) {
       return NextResponse.json(
@@ -14,11 +14,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const { audioBuffer, mimeType } = await narrateStory({ ttsScript, voiceName });
+    const audioBuffer = await generateSpeech({
+      text: ttsScript,
+      voiceId: voiceId || "21m00Tcm4TlvDq8ikWAM", // Rachel default
+    });
 
     const audioBase64 = audioBuffer.toString("base64");
 
-    return NextResponse.json({ audioBase64, mimeType });
+    return NextResponse.json({ audioBase64, mimeType: "audio/mpeg" });
   } catch (error) {
     console.error("Narration generation error:", error);
     return NextResponse.json(

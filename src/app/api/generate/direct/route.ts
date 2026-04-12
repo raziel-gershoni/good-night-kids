@@ -1,30 +1,33 @@
 import { NextResponse } from "next/server";
-import { directStory } from "@/lib/gemini/direct";
+import { vocalizeText } from "@/lib/nikud/dicta";
 
 export const maxDuration = 300;
 
 export async function POST(request: Request) {
   try {
-    const { childrenStory, model, thinkingLevel } = await request.json();
+    const { childrenStory } = await request.json();
 
     if (!childrenStory?.trim()) {
       return NextResponse.json(
-        { error: "Missing children story" },
+        { error: "Missing story text" },
         { status: 400 }
       );
     }
 
-    const ttsScript = await directStory({
-      childrenStory,
-      model: model || "gemini-3.1-flash-lite-preview",
-      thinkingLevel: thinkingLevel || "none",
-    });
+    // Dicta Nakdan: add nikud while preserving audio tags
+    // This MUST NOT fail silently - if Dicta errors, the pipeline halts
+    const vocalizedStory = await vocalizeText(childrenStory);
 
-    return NextResponse.json({ ttsScript });
+    return NextResponse.json({ ttsScript: vocalizedStory });
   } catch (error) {
-    console.error("Direction generation error:", error);
+    console.error("Vocalization error:", error);
     return NextResponse.json(
-      { error: "Failed to generate directions" },
+      {
+        error:
+          error instanceof Error
+            ? `Vocalization failed: ${error.message}`
+            : "Failed to vocalize text",
+      },
       { status: 500 }
     );
   }

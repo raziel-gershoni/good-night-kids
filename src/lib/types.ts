@@ -1,25 +1,19 @@
 export type SourceType = "tanakh" | "gmara" | "zohar" | "midrash" | "other";
 
-export type GeminiModel =
-  | "gemini-3.1-flash-lite-preview"
-  | "gemini-3.1-pro-preview"
-  | "gemini-2.5-flash"
-  | "gemini-2.5-pro";
+export type ClaudeModel = "claude-sonnet-4-6" | "claude-opus-4-6";
 
-export type ThinkingLevel = "none" | "low" | "medium" | "high";
+export type EffortLevel = "low" | "medium" | "high" | "max";
 
-export const GEMINI_MODELS: { value: GeminiModel; label: string }[] = [
-  { value: "gemini-3.1-flash-lite-preview", label: "3.1 Flash Lite (מהיר)" },
-  { value: "gemini-3.1-pro-preview", label: "3.1 Pro (מתקדם)" },
-  { value: "gemini-2.5-flash", label: "2.5 Flash" },
-  { value: "gemini-2.5-pro", label: "2.5 Pro" },
+export const CLAUDE_MODELS: { value: ClaudeModel; label: string }[] = [
+  { value: "claude-sonnet-4-6", label: "Sonnet 4.6 (מהיר)" },
+  { value: "claude-opus-4-6", label: "Opus 4.6 (מתקדם)" },
 ];
 
-export const THINKING_LEVELS: { value: ThinkingLevel; label: string }[] = [
-  { value: "none", label: "ללא" },
+export const EFFORT_LEVELS: { value: EffortLevel; label: string }[] = [
   { value: "low", label: "נמוך" },
   { value: "medium", label: "בינוני" },
   { value: "high", label: "גבוה" },
+  { value: "max", label: "מקסימלי" },
 ];
 
 export const SOURCE_TYPES: { value: SourceType; label: string }[] = [
@@ -30,13 +24,14 @@ export const SOURCE_TYPES: { value: SourceType; label: string }[] = [
   { value: "other", label: "אחר" },
 ];
 
+// ElevenLabs Hebrew-compatible voices
+// These are default ElevenLabs voices - user can find voice IDs from their library
 export const TTS_VOICES: { value: string; label: string }[] = [
-  { value: "Aoede", label: "Aoede (חם)" },
-  { value: "Kore", label: "Kore (יציב)" },
-  { value: "Leda", label: "Leda (צעיר)" },
-  { value: "Enceladus", label: "Enceladus (רך)" },
-  { value: "Puck", label: "Puck (עליז)" },
-  { value: "Charon", label: "Charon (מידעי)" },
+  { value: "21m00Tcm4TlvDq8ikWAM", label: "Rachel (נשי)" },
+  { value: "29vD33N1CtxCmqQRPOHJ", label: "Drew (גברי)" },
+  { value: "EXAVITQu4vr4xnSDxMaL", label: "Sarah (נשי)" },
+  { value: "ErXwobaYiN019PkySvjV", label: "Antoni (גברי)" },
+  { value: "MF3mGyEYCl7XYWbV9V6O", label: "Elli (נשי)" },
 ];
 
 export interface StoryData {
@@ -48,9 +43,9 @@ export interface StoryData {
   childrenStory?: string;
   ttsScript?: string;
   audioUrl?: string;
-  model: GeminiModel;
-  thinkingLevel: ThinkingLevel;
-  voiceName: string;
+  model: ClaudeModel;
+  effort: EffortLevel;
+  voiceId: string;
 }
 
 export interface SavedStory {
