@@ -10,6 +10,44 @@ import { SavedStoriesList } from "./saved-stories-list";
 import type { StoryModel, EffortLevel, SourceType, SavedStory } from "@/lib/types";
 import { audioBufferToWav } from "@/lib/audio-utils";
 
+interface EffectBlob {
+  label: string;
+  prompt: string;
+  timestampSeconds: number | null;
+  audioUrl: string;
+}
+
+function parseSoundDesignSection(story: string): { ambient: string; effects: string } {
+  const marker = "### עיצוב סאונד";
+  const idx = story.indexOf(marker);
+  if (idx === -1) return { ambient: "", effects: "" };
+  const section = story.slice(idx + marker.length).trim();
+
+  const ambientMatch = section.match(/אווירה:\s*(.+)/);
+  const ambient = ambientMatch?.[1]?.trim() || "";
+
+  const effectLines: string[] = [];
+  const regex = /(?:\*|-|•)\s*(.+)/g;
+  let match;
+  while ((match = regex.exec(section)) !== null) {
+    effectLines.push(match[1].trim());
+  }
+  const effects = effectLines.join("\n");
+
+  return { ambient, effects };
+}
+
+function parseEffectsText(text: string): { label: string; prompt: string }[] {
+  const results: { label: string; prompt: string }[] = [];
+  for (const line of text.split("\n")) {
+    const match = line.match(/^(.+?)\s*[-–—]\s*(.+)$/);
+    if (match) {
+      results.push({ label: match[1].trim(), prompt: match[2].trim() });
+    }
+  }
+  return results;
+}
+
 export function StoryWizard() {
   // Settings
   const [model, setModel] = useState<StoryModel>("gemini-3.1-flash-lite-preview");
@@ -20,17 +58,24 @@ export function StoryWizard() {
   // Content
   const [originalText, setOriginalText] = useState("");
   const [childrenStory, setChildrenStory] = useState("");
-  const [ttsScript, setTtsScript] = useState(""); // vocalized story with nikud
+  const [ttsScript, setTtsScript] = useState("");
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioBase64, setAudioBase64] = useState<string | null>(null);
 
-  // Sounds
-  const [isGeneratingAmbient, setIsGeneratingAmbient] = useState(false);
+  // Sound design
+  const [ambientPrompt, setAmbientPrompt] = useState("");
+  const [effectsText, setEffectsText] = useState("");
+  const [ambientBlob, setAmbientBlob] = useState<string | null>(null); // blob URL
+  const [effectBlobs, setEffectBlobs] = useState<EffectBlob[]>([]);
+  const [isMixed, setIsMixed] = useState(false);
 
   // Loading states
   const [isGeneratingStory, setIsGeneratingStory] = useState(false);
   const [isVocalizing, setIsVocalizing] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [isGeneratingAmbient, setIsGeneratingAmbient] = useState(false);
+  const [isGeneratingEffects, setIsGeneratingEffects] = useState(false);
+  const [isMixing, setIsMixing] = useState(false);
 
   // Saved story state
   const [currentStoryId, setCurrentStoryId] = useState<string | null>(null);
@@ -38,10 +83,9 @@ export function StoryWizard() {
 
   // Error state
   const [error, setError] = useState<string | null>(null);
-
   const clearError = () => setError(null);
 
-  // Step 1: Generate story with Claude (story + audio tags + sound design)
+  // Step 1: Generate story
   const generateStory = useCallback(async () => {
     clearError();
     setIsGeneratingStory(true);
@@ -57,6 +101,14 @@ export function StoryWizard() {
       setTtsScript("");
       setAudioUrl(null);
       setAudioBase64(null);
+      setIsMixed(false);
+      setAmbientBlob(null);
+      setEffectBlobs([]);
+
+      // Auto-populate sound design inputs
+      const { ambient, effects } = parseSoundDesignSection(data.childrenStory);
+      setAmbientPrompt(ambient);
+      setEffectsText(effects);
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה ביצירת הסיפור");
     } finally {
@@ -64,7 +116,7 @@ export function StoryWizard() {
     }
   }, [originalText, sourceType, model, effort]);
 
-  // Optional: Vocalize with Dicta Nakdan (replaces story text in-place)
+  // Optional: Vocalize with Dicta Nakdan
   const vocalize = useCallback(async () => {
     clearError();
     setIsVocalizing(true);
@@ -79,7 +131,7 @@ export function StoryWizard() {
         throw new Error(data.error || "Failed to vocalize");
       }
       const data = await res.json();
-      setChildrenStory(data.ttsScript); // Replace story text in-place
+      setChildrenStory(data.ttsScript);
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה בניקוד הטקסט");
     } finally {
@@ -87,10 +139,11 @@ export function StoryWizard() {
     }
   }, [childrenStory]);
 
-  // Step 2: Narrate with ElevenLabs v3
+  // Step 2: Narrate with ElevenLabs
   const generateAudio = useCallback(async () => {
     clearError();
     setIsGeneratingAudio(true);
+    setIsMixed(false);
     try {
       const res = await fetch("/api/generate/narrate", {
         method: "POST",
@@ -112,60 +165,104 @@ export function StoryWizard() {
     }
   }, [childrenStory, voiceId]);
 
-  // Step 4: Generate sounds and pre-mix everything into one track
-  const generateSounds = useCallback(async () => {
-    if (!audioBase64) return;
+  // Generate ambient only
+  const generateAmbient = useCallback(async () => {
+    if (!ambientPrompt.trim()) return;
     clearError();
     setIsGeneratingAmbient(true);
     try {
-      const formData = new FormData();
-      formData.append("storyText", childrenStory);
-      const narrationBytes = Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0));
-      formData.append("narration", new Blob([narrationBytes], { type: "audio/mpeg" }), "narration.mp3");
-
       const res = await fetch("/api/generate/sounds", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "ambient", ambientPrompt }),
       });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `Failed to generate sounds (${res.status})`);
-      }
+      if (!res.ok) throw new Error("Failed to generate ambient");
       const data = await res.json();
-      console.log("Sounds response:", {
-        hasAmbient: !!data.ambientBase64,
-        ambientError: data.ambientError,
-        effectCount: data.effects?.length ?? 0,
-      });
+      if (data.audioBase64) {
+        const blob = new Blob(
+          [Uint8Array.from(atob(data.audioBase64), (c) => c.charCodeAt(0))],
+          { type: data.mimeType }
+        );
+        setAmbientBlob(URL.createObjectURL(blob));
+        setIsMixed(false);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "שגיאה ביצירת אווירה");
+    } finally {
+      setIsGeneratingAmbient(false);
+    }
+  }, [ambientPrompt]);
 
-      // Pre-mix narration + ambient + effects into single track
-      console.log("Mixing tracks...");
-      // First decode narration to get its sample rate
+  // Generate effects only
+  const generateEffects = useCallback(async () => {
+    const parsed = parseEffectsText(effectsText);
+    if (parsed.length === 0) return;
+    clearError();
+    setIsGeneratingEffects(true);
+    try {
+      const res = await fetch("/api/generate/sounds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "effects",
+          effects: parsed,
+          narrationBase64: audioBase64,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to generate effects");
+      const data = await res.json();
+      const blobs: EffectBlob[] = (data.effects || []).map(
+        (e: { label: string; prompt: string; timestampSeconds: number | null; audioBase64: string }) => ({
+          label: e.label,
+          prompt: e.prompt,
+          timestampSeconds: e.timestampSeconds,
+          audioUrl: URL.createObjectURL(
+            new Blob(
+              [Uint8Array.from(atob(e.audioBase64), (c) => c.charCodeAt(0))],
+              { type: data.mimeType }
+            )
+          ),
+        })
+      );
+      setEffectBlobs(blobs);
+      setIsMixed(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "שגיאה ביצירת אפקטים");
+    } finally {
+      setIsGeneratingEffects(false);
+    }
+  }, [effectsText, audioBase64]);
+
+  // Mix everything
+  const mixAll = useCallback(async () => {
+    if (!audioBase64) return;
+    clearError();
+    setIsMixing(true);
+    try {
+      const narBytes = Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0));
       const tempCtx = new AudioContext();
-      const narrationBuf = await tempCtx.decodeAudioData(narrationBytes.buffer.slice(0));
+      const narBuf = await tempCtx.decodeAudioData(narBytes.buffer.slice(0));
       await tempCtx.close();
 
-      const sampleRate = narrationBuf.sampleRate;
+      const sampleRate = narBuf.sampleRate;
       const fadeout = 4;
-      const narDuration = narrationBuf.length / sampleRate;
-      const totalLength = narrationBuf.length + fadeout * sampleRate;
+      const narDuration = narBuf.length / sampleRate;
+      const totalLength = narBuf.length + fadeout * sampleRate;
       const offlineCtx = new OfflineAudioContext(1, totalLength, sampleRate);
-      console.log("Narration:", narDuration.toFixed(1), "s, sampleRate:", sampleRate);
 
       // Narration
       const narSrc = offlineCtx.createBufferSource();
-      narSrc.buffer = narrationBuf;
+      narSrc.buffer = narBuf;
       narSrc.connect(offlineCtx.destination);
       narSrc.start(0);
 
-      // Ambient loop with fadeout
-      if (data.ambientBase64) {
-        const ambBytes = Uint8Array.from(atob(data.ambientBase64), (c) => c.charCodeAt(0));
-        const ambBuf = await offlineCtx.decodeAudioData(ambBytes.buffer.slice(0));
-        console.log("Ambient decoded:", ambBuf.duration.toFixed(1), "s, sampleRate:", ambBuf.sampleRate);
+      // Ambient at 100% volume, looped
+      if (ambientBlob) {
+        const ambResp = await fetch(ambientBlob);
+        const ambBuf = await offlineCtx.decodeAudioData(await ambResp.arrayBuffer());
         const ambGain = offlineCtx.createGain();
-        ambGain.gain.setValueAtTime(0.5, 0);
-        ambGain.gain.setValueAtTime(0.5, narDuration);
+        ambGain.gain.setValueAtTime(1.0, 0);
+        ambGain.gain.setValueAtTime(1.0, narDuration);
         ambGain.gain.linearRampToValueAtTime(0, narDuration + fadeout);
         const loops = Math.ceil(totalLength / ambBuf.length);
         for (let i = 0; i < loops; i++) {
@@ -174,48 +271,36 @@ export function StoryWizard() {
           src.connect(ambGain).connect(offlineCtx.destination);
           src.start((i * ambBuf.length) / sampleRate);
         }
-        console.log("Ambient mixed:", loops, "loops");
-      } else {
-        console.log("No ambient to mix");
       }
 
       // Effects at timestamps
-      if (data.effects?.length) {
-        for (let i = 0; i < data.effects.length; i++) {
-          const e = data.effects[i];
-          try {
-            const effBytes = Uint8Array.from(atob(e.audioBase64), (c) => c.charCodeAt(0));
-            const effBuf = await offlineCtx.decodeAudioData(effBytes.buffer.slice(0));
-            const effSrc = offlineCtx.createBufferSource();
-            effSrc.buffer = effBuf;
-            const effGain = offlineCtx.createGain();
-            effGain.gain.value = 0.7;
-            effSrc.connect(effGain).connect(offlineCtx.destination);
-            const time = e.timestampSeconds ?? ((i + 1) / (data.effects.length + 1)) * narDuration;
-            console.log(`Effect "${e.label}" at ${time.toFixed(1)}s`);
-            effSrc.start(Math.min(time, narDuration));
-          } catch { /* skip failed effect */ }
-        }
+      for (let i = 0; i < effectBlobs.length; i++) {
+        const e = effectBlobs[i];
+        try {
+          const effResp = await fetch(e.audioUrl);
+          const effBuf = await offlineCtx.decodeAudioData(await effResp.arrayBuffer());
+          const effSrc = offlineCtx.createBufferSource();
+          effSrc.buffer = effBuf;
+          const effGain = offlineCtx.createGain();
+          effGain.gain.value = 0.7;
+          effSrc.connect(effGain).connect(offlineCtx.destination);
+          const time = e.timestampSeconds ?? ((i + 1) / (effectBlobs.length + 1)) * narDuration;
+          effSrc.start(Math.min(time, narDuration));
+        } catch { /* skip */ }
       }
 
       const rendered = await offlineCtx.startRendering();
-
-      // Convert to WAV blob
       const wavData = audioBufferToWav(rendered);
-      const mixedBlob = new Blob([wavData], { type: "audio/wav" });
-      const mixedUrl = URL.createObjectURL(mixedBlob);
-      console.log("Mix complete:", (rendered.length / sampleRate).toFixed(1), "seconds");
-
-      // Replace the narration with the mixed track
+      const mixedUrl = URL.createObjectURL(new Blob([wavData], { type: "audio/wav" }));
       setAudioUrl(mixedUrl);
-      setAudioBase64(null); // Can't re-mix, but download works
+      setIsMixed(true);
     } catch (err) {
       console.error("Mix error:", err);
-      setError(err instanceof Error ? err.message : "שגיאה ביצירת צלילים");
+      setError(err instanceof Error ? err.message : "שגיאה במיקס");
     } finally {
-      setIsGeneratingAmbient(false);
+      setIsMixing(false);
     }
-  }, [childrenStory, audioBase64]);
+  }, [audioBase64, ambientBlob, effectBlobs]);
 
   const handleSaved = (id: string, slug: string) => {
     setCurrentStoryId(id);
@@ -230,6 +315,9 @@ export function StoryWizard() {
     setCurrentStoryId(story.id);
     setCurrentSlug(story.slug);
     setModel((story.model as StoryModel) || "claude-sonnet-4-6");
+    setIsMixed(false);
+    setAmbientBlob(null);
+    setEffectBlobs([]);
 
     if (story.hasAudio) {
       try {
@@ -238,14 +326,14 @@ export function StoryWizard() {
           const blob = await res.blob();
           setAudioUrl(URL.createObjectURL(blob));
         }
-      } catch {
-        // Audio load failed
-      }
+      } catch { /* */ }
     } else {
       setAudioUrl(null);
       setAudioBase64(null);
     }
   };
+
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
 
   return (
     <div className="space-y-6">
@@ -298,6 +386,84 @@ export function StoryWizard() {
         )}
       </StepSection>
 
+      {/* Sound design inputs */}
+      {childrenStory && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Ambient */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gold-400">אווירה</h3>
+              <button
+                onClick={generateAmbient}
+                disabled={isGeneratingAmbient || !ambientPrompt.trim()}
+                className="px-3 py-1 bg-gold-500 hover:bg-gold-400 disabled:bg-night-600 disabled:text-gray-500 text-night-900 text-sm font-bold rounded-lg transition-colors flex items-center gap-1"
+              >
+                {isGeneratingAmbient && (
+                  <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                )}
+                {isGeneratingAmbient ? "..." : "ייצר"}
+              </button>
+            </div>
+            <textarea
+              value={ambientPrompt}
+              onChange={(e) => setAmbientPrompt(e.target.value)}
+              rows={3}
+              className="w-full bg-night-800 border border-night-600/50 rounded-xl p-3 text-white text-sm resize-y focus:outline-none focus:border-gold-400"
+              dir="ltr"
+            />
+            {ambientBlob && <span className="text-xs text-green-400">✓ אווירה מוכנה</span>}
+          </div>
+
+          {/* Effects */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gold-400">אפקטים</h3>
+              <button
+                onClick={generateEffects}
+                disabled={isGeneratingEffects || !effectsText.trim()}
+                className="px-3 py-1 bg-gold-500 hover:bg-gold-400 disabled:bg-night-600 disabled:text-gray-500 text-night-900 text-sm font-bold rounded-lg transition-colors flex items-center gap-1"
+              >
+                {isGeneratingEffects && (
+                  <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                )}
+                {isGeneratingEffects ? "..." : "ייצר"}
+              </button>
+            </div>
+            <textarea
+              value={effectsText}
+              onChange={(e) => setEffectsText(e.target.value)}
+              rows={3}
+              className="w-full bg-night-800 border border-night-600/50 rounded-xl p-3 text-white text-sm resize-y focus:outline-none focus:border-gold-400"
+              dir="ltr"
+            />
+            {effectBlobs.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {effectBlobs.map((e, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      const a = new Audio(e.audioUrl);
+                      a.volume = 0.7;
+                      a.play();
+                    }}
+                    className="px-2 py-0.5 bg-night-700/50 hover:bg-night-600 rounded text-gray-400 hover:text-gold-400 transition-colors cursor-pointer text-xs"
+                    title={e.prompt}
+                  >
+                    ▶ {e.label} {e.timestampSeconds !== null ? `(${formatTime(e.timestampSeconds)})` : ""}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <StepSection
         stepNumber={2}
         title="הקראה"
@@ -308,25 +474,24 @@ export function StoryWizard() {
         value=""
         onChange={() => {}}
       >
-        {audioUrl && audioBase64 && (
+        {/* Mix button */}
+        {audioUrl && !isMixed && (ambientBlob || effectBlobs.length > 0) && (
           <button
-            onClick={generateSounds}
-            disabled={isGeneratingAmbient}
-            className="px-4 py-1.5 bg-night-700 hover:bg-night-600 disabled:bg-night-800 disabled:text-gray-600 text-sm text-gray-300 rounded-lg transition-colors flex items-center gap-2 border border-night-600/50"
+            onClick={mixAll}
+            disabled={isMixing}
+            className="px-5 py-2 bg-gold-500 hover:bg-gold-400 disabled:bg-night-600 disabled:text-gray-500 text-night-900 font-bold rounded-xl transition-colors flex items-center gap-2"
           >
-            {isGeneratingAmbient && (
-              <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+            {isMixing && (
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
             )}
-            {isGeneratingAmbient ? "מייצר אווירה..." : "ייצר אווירה"}
+            {isMixing ? "מערבב..." : "מיקס הכל"}
           </button>
         )}
-        <AudioPlayer
-          audioUrl={audioUrl}
-          isLoading={isGeneratingAudio}
-        />
+        {isMixed && <span className="text-xs text-green-400">✓ מעורבב</span>}
+        <AudioPlayer audioUrl={audioUrl} isLoading={isGeneratingAudio} />
       </StepSection>
 
       <StoryActions

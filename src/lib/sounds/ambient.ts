@@ -43,7 +43,7 @@ export async function generateAmbientSound(
 
 // --- Sound effect generation ---
 
-async function generateSfx(prompt: string): Promise<Buffer> {
+export async function generateSfx(prompt: string): Promise<Buffer> {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) throw new Error("ELEVENLABS_API_KEY not set");
 
@@ -71,7 +71,7 @@ async function generateSfx(prompt: string): Promise<Buffer> {
 
 // --- Gemini audio analysis for timestamps ---
 
-async function findEffectTimestamps(
+export async function findEffectTimestamps(
   narrationBase64: string,
   effectLabels: string[]
 ): Promise<Map<string, number>> {
