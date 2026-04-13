@@ -252,7 +252,20 @@ export function AudioPlayer({
         onEnded={handleNarrationEnded}
       />
       {ambientUrl && (
-        <audio ref={ambientRef} src={ambientUrl} loop />
+        <audio
+          ref={ambientRef}
+          src={ambientUrl}
+          loop
+          preload="auto"
+          onCanPlayThrough={() => {
+            if (ambientRef.current) {
+              ambientRef.current.volume = ambientVolume;
+              if (isPlaying) {
+                ambientRef.current.play().catch(() => {});
+              }
+            }
+          }}
+        />
       )}
 
       {/* Main controls */}
