@@ -1,4 +1,5 @@
 import { getGeminiClient } from "../gemini/client";
+import { ThinkingLevel } from "@google/genai";
 
 const ELEVENLABS_SFX_URL = "https://api.elevenlabs.io/v1/sound-generation";
 
@@ -85,7 +86,7 @@ async function findEffectTimestamps(
   const response = await ai.models.generateContent({
     model: "gemini-3.1-flash-lite-preview",
     config: {
-      thinkingConfig: { thinkingLevel: "HIGH" },
+      thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
     },
     contents: [
       {
