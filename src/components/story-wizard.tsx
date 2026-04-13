@@ -136,6 +136,12 @@ export function StoryWizard() {
         throw new Error(errData.error || `Failed to generate sounds (${res.status})`);
       }
       const data = await res.json();
+      console.log("Sounds response:", {
+        hasAmbient: !!data.ambientBase64,
+        ambientError: data.ambientError,
+        effectCount: data.effects?.length ?? 0,
+        mimeType: data.mimeType,
+      });
 
       if (data.ambientBase64) {
         const ambientBlob = new Blob(
