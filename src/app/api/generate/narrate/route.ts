@@ -19,14 +19,18 @@ export async function POST(request: Request) {
     const soundIdx = ttsScript.indexOf(soundMarker);
     const textForTts = soundIdx !== -1 ? ttsScript.slice(0, soundIdx).trim() : ttsScript;
 
-    const audioBuffer = await generateSpeech({
+    const { audioBuffer, alignment } = await generateSpeech({
       text: textForTts,
-      voiceId: voiceId || "owHnXhz2H7U5Cv31srDU", // Rachel default
+      voiceId: voiceId || "owHnXhz2H7U5Cv31srDU",
     });
 
     const audioBase64 = audioBuffer.toString("base64");
 
-    return NextResponse.json({ audioBase64, mimeType: "audio/mpeg" });
+    return NextResponse.json({
+      audioBase64,
+      alignment,
+      mimeType: "audio/mpeg",
+    });
   } catch (error) {
     console.error("Narration generation error:", error);
     return NextResponse.json(

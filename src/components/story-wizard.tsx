@@ -61,6 +61,7 @@ export function StoryWizard() {
   const [ttsScript, setTtsScript] = useState("");
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioBase64, setAudioBase64] = useState<string | null>(null);
+  const [ttsAlignment, setTtsAlignment] = useState<unknown>(null);
 
   // Sound design
   const [ambientPrompt, setAmbientPrompt] = useState("");
@@ -153,6 +154,7 @@ export function StoryWizard() {
       if (!res.ok) throw new Error("Failed to generate audio");
       const data = await res.json();
       setAudioBase64(data.audioBase64);
+      setTtsAlignment(data.alignment || null);
       const blob = new Blob(
         [Uint8Array.from(atob(data.audioBase64), (c) => c.charCodeAt(0))],
         { type: data.mimeType }
@@ -206,7 +208,7 @@ export function StoryWizard() {
         body: JSON.stringify({
           mode: "effects",
           effects: parsed,
-          narrationBase64: audioBase64,
+          alignment: ttsAlignment,
         }),
       });
       if (!res.ok) throw new Error("Failed to generate effects");
@@ -231,7 +233,7 @@ export function StoryWizard() {
     } finally {
       setIsGeneratingEffects(false);
     }
-  }, [effectsText, audioBase64]);
+  }, [effectsText, ttsAlignment]);
 
   // Mix everything
   const mixAll = useCallback(async () => {
