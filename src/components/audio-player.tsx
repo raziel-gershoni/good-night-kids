@@ -27,7 +27,7 @@ export function AudioPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [ambientVolume, setAmbientVolume] = useState(0.15);
+  const [ambientVolume, setAmbientVolume] = useState(0.3);
   const [isMixing, setIsMixing] = useState(false);
 
   useEffect(() => {
@@ -58,17 +58,22 @@ export function AudioPlayer({
   function scheduleEffects() {
     effectTimeoutsRef.current.forEach(clearTimeout);
     effectTimeoutsRef.current = [];
-    if (!narrationRef.current || !effects.length || !duration) return;
+    if (!narrationRef.current || !effects.length) return;
+    const dur = narrationRef.current.duration || duration;
+    if (!dur) return;
     const pos = narrationRef.current.currentTime;
-    effects.forEach((effect) => {
-      const time = effect.timestampSeconds;
-      if (time === null) return;
+    console.log(`Scheduling ${effects.length} effects, duration=${dur}, pos=${pos}`);
+    effects.forEach((effect, i) => {
+      // Use timestamp if available, otherwise spread evenly
+      const time = effect.timestampSeconds ?? (effect.fallbackPosition > 0 ? effect.fallbackPosition * dur : ((i + 1) / (effects.length + 1)) * dur);
       const delay = (time - pos) * 1000;
+      console.log(`Effect "${effect.label}" at ${time.toFixed(1)}s, delay=${(delay/1000).toFixed(1)}s`);
       if (delay > 0) {
         effectTimeoutsRef.current.push(
           setTimeout(() => {
+            console.log(`Playing effect: ${effect.label}`);
             const a = new Audio(effect.audioUrl);
-            a.volume = 0.5;
+            a.volume = 0.7;
             a.play();
           }, delay)
         );
