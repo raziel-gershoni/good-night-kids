@@ -4,10 +4,11 @@ import { useState, useCallback } from "react";
 import { SettingsBar } from "./settings-bar";
 import { SourceInput } from "./source-input";
 import { StepSection } from "./step-section";
-import { AudioPlayer, type SoundEffectData } from "./audio-player";
+import { AudioPlayer } from "./audio-player";
 import { StoryActions } from "./story-actions";
 import { SavedStoriesList } from "./saved-stories-list";
 import type { StoryModel, EffortLevel, SourceType, SavedStory } from "@/lib/types";
+import { audioBufferToWav } from "@/lib/audio-utils";
 
 export function StoryWizard() {
   // Settings
@@ -24,8 +25,6 @@ export function StoryWizard() {
   const [audioBase64, setAudioBase64] = useState<string | null>(null);
 
   // Sounds
-  const [ambientUrl, setAmbientUrl] = useState<string | null>(null);
-  const [soundEffects, setSoundEffects] = useState<SoundEffectData[]>([]);
   const [isGeneratingAmbient, setIsGeneratingAmbient] = useState(false);
 
   // Loading states
@@ -58,8 +57,6 @@ export function StoryWizard() {
       setTtsScript("");
       setAudioUrl(null);
       setAudioBase64(null);
-      setAmbientUrl(null);
-      setSoundEffects([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה ביצירת הסיפור");
     } finally {
@@ -115,17 +112,16 @@ export function StoryWizard() {
     }
   }, [childrenStory, voiceId]);
 
-  // Step 4: Generate ambient + sound effects
+  // Step 4: Generate sounds and pre-mix everything into one track
   const generateSounds = useCallback(async () => {
+    if (!audioBase64) return;
     clearError();
     setIsGeneratingAmbient(true);
     try {
       const formData = new FormData();
       formData.append("storyText", childrenStory);
-      if (audioBase64) {
-        const audioBytes = Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0));
-        formData.append("narration", new Blob([audioBytes], { type: "audio/mpeg" }), "narration.mp3");
-      }
+      const narrationBytes = Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0));
+      formData.append("narration", new Blob([narrationBytes], { type: "audio/mpeg" }), "narration.mp3");
 
       const res = await fetch("/api/generate/sounds", {
         method: "POST",
@@ -140,35 +136,75 @@ export function StoryWizard() {
         hasAmbient: !!data.ambientBase64,
         ambientError: data.ambientError,
         effectCount: data.effects?.length ?? 0,
-        mimeType: data.mimeType,
       });
 
+      // Pre-mix narration + ambient + effects into single track
+      console.log("Mixing tracks...");
+      const ctx = new AudioContext();
+      const narrationBuf = await ctx.decodeAudioData(narrationBytes.buffer.slice(0));
+
+      const sampleRate = narrationBuf.sampleRate;
+      const fadeout = 4;
+      const narDuration = narrationBuf.length / sampleRate;
+      const totalLength = narrationBuf.length + fadeout * sampleRate;
+      const offlineCtx = new OfflineAudioContext(1, totalLength, sampleRate);
+
+      // Narration
+      const narSrc = offlineCtx.createBufferSource();
+      narSrc.buffer = narrationBuf;
+      narSrc.connect(offlineCtx.destination);
+      narSrc.start(0);
+
+      // Ambient loop with fadeout
       if (data.ambientBase64) {
-        const ambientBlob = new Blob(
-          [Uint8Array.from(atob(data.ambientBase64), (c) => c.charCodeAt(0))],
-          { type: data.mimeType }
-        );
-        setAmbientUrl(URL.createObjectURL(ambientBlob));
+        const ambBytes = Uint8Array.from(atob(data.ambientBase64), (c) => c.charCodeAt(0));
+        const ambBuf = await ctx.decodeAudioData(ambBytes.buffer.slice(0));
+        const ambGain = offlineCtx.createGain();
+        ambGain.gain.setValueAtTime(0.3, 0);
+        ambGain.gain.setValueAtTime(0.3, narDuration);
+        ambGain.gain.linearRampToValueAtTime(0, narDuration + fadeout);
+        const loops = Math.ceil(totalLength / ambBuf.length);
+        for (let i = 0; i < loops; i++) {
+          const src = offlineCtx.createBufferSource();
+          src.buffer = ambBuf;
+          src.connect(ambGain).connect(offlineCtx.destination);
+          src.start((i * ambBuf.length) / sampleRate);
+        }
       }
 
+      // Effects at timestamps
       if (data.effects?.length) {
-        const efx: SoundEffectData[] = data.effects.map(
-          (e: { label: string; timestampSeconds: number | null; audioBase64: string }) => {
-            const blob = new Blob(
-              [Uint8Array.from(atob(e.audioBase64), (c) => c.charCodeAt(0))],
-              { type: data.mimeType }
-            );
-            return {
-              label: e.label,
-              timestampSeconds: e.timestampSeconds,
-              fallbackPosition: 0,
-              audioUrl: URL.createObjectURL(blob),
-            };
-          }
-        );
-        setSoundEffects(efx);
+        for (let i = 0; i < data.effects.length; i++) {
+          const e = data.effects[i];
+          try {
+            const effBytes = Uint8Array.from(atob(e.audioBase64), (c) => c.charCodeAt(0));
+            const effBuf = await ctx.decodeAudioData(effBytes.buffer.slice(0));
+            const effSrc = offlineCtx.createBufferSource();
+            effSrc.buffer = effBuf;
+            const effGain = offlineCtx.createGain();
+            effGain.gain.value = 0.7;
+            effSrc.connect(effGain).connect(offlineCtx.destination);
+            const time = e.timestampSeconds ?? ((i + 1) / (data.effects.length + 1)) * narDuration;
+            console.log(`Effect "${e.label}" at ${time.toFixed(1)}s`);
+            effSrc.start(Math.min(time, narDuration));
+          } catch { /* skip failed effect */ }
+        }
       }
+
+      const rendered = await offlineCtx.startRendering();
+      await ctx.close();
+
+      // Convert to WAV blob
+      const wavData = audioBufferToWav(rendered);
+      const mixedBlob = new Blob([wavData], { type: "audio/wav" });
+      const mixedUrl = URL.createObjectURL(mixedBlob);
+      console.log("Mix complete:", (rendered.length / sampleRate).toFixed(1), "seconds");
+
+      // Replace the narration with the mixed track
+      setAudioUrl(mixedUrl);
+      setAudioBase64(null); // Can't re-mix, but download works
     } catch (err) {
+      console.error("Mix error:", err);
       setError(err instanceof Error ? err.message : "שגיאה ביצירת צלילים");
     } finally {
       setIsGeneratingAmbient(false);
@@ -188,7 +224,6 @@ export function StoryWizard() {
     setCurrentStoryId(story.id);
     setCurrentSlug(story.slug);
     setModel((story.model as StoryModel) || "claude-sonnet-4-6");
-    setAmbientUrl(null);
 
     if (story.hasAudio) {
       try {
@@ -267,7 +302,7 @@ export function StoryWizard() {
         value=""
         onChange={() => {}}
       >
-        {audioUrl && !ambientUrl && (
+        {audioUrl && audioBase64 && (
           <button
             onClick={generateSounds}
             disabled={isGeneratingAmbient}
@@ -284,8 +319,6 @@ export function StoryWizard() {
         )}
         <AudioPlayer
           audioUrl={audioUrl}
-          ambientUrl={ambientUrl}
-          effects={soundEffects}
           isLoading={isGeneratingAudio}
         />
       </StepSection>
