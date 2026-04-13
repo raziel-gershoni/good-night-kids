@@ -84,6 +84,9 @@ async function findEffectTimestamps(
 
   const response = await ai.models.generateContent({
     model: "gemini-3.1-flash-lite-preview",
+    config: {
+      thinkingConfig: { thinkingLevel: "HIGH" },
+    },
     contents: [
       {
         parts: [
@@ -115,7 +118,7 @@ Give only the numbers, no other text.`,
 
   const text = response.text ?? "";
 
-  console.log("Claude timestamp response:", text);
+  console.log("Gemini timestamp response:", text);
 
   const timestamps = new Map<string, number>();
   const lines = text.trim().split("\n");
