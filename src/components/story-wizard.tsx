@@ -140,14 +140,17 @@ export function StoryWizard() {
 
       // Pre-mix narration + ambient + effects into single track
       console.log("Mixing tracks...");
-      const ctx = new AudioContext();
-      const narrationBuf = await ctx.decodeAudioData(narrationBytes.buffer.slice(0));
+      // First decode narration to get its sample rate
+      const tempCtx = new AudioContext();
+      const narrationBuf = await tempCtx.decodeAudioData(narrationBytes.buffer.slice(0));
+      await tempCtx.close();
 
       const sampleRate = narrationBuf.sampleRate;
       const fadeout = 4;
       const narDuration = narrationBuf.length / sampleRate;
       const totalLength = narrationBuf.length + fadeout * sampleRate;
       const offlineCtx = new OfflineAudioContext(1, totalLength, sampleRate);
+      console.log("Narration:", narDuration.toFixed(1), "s, sampleRate:", sampleRate);
 
       // Narration
       const narSrc = offlineCtx.createBufferSource();
@@ -158,10 +161,11 @@ export function StoryWizard() {
       // Ambient loop with fadeout
       if (data.ambientBase64) {
         const ambBytes = Uint8Array.from(atob(data.ambientBase64), (c) => c.charCodeAt(0));
-        const ambBuf = await ctx.decodeAudioData(ambBytes.buffer.slice(0));
+        const ambBuf = await offlineCtx.decodeAudioData(ambBytes.buffer.slice(0));
+        console.log("Ambient decoded:", ambBuf.duration.toFixed(1), "s, sampleRate:", ambBuf.sampleRate);
         const ambGain = offlineCtx.createGain();
-        ambGain.gain.setValueAtTime(0.3, 0);
-        ambGain.gain.setValueAtTime(0.3, narDuration);
+        ambGain.gain.setValueAtTime(0.5, 0);
+        ambGain.gain.setValueAtTime(0.5, narDuration);
         ambGain.gain.linearRampToValueAtTime(0, narDuration + fadeout);
         const loops = Math.ceil(totalLength / ambBuf.length);
         for (let i = 0; i < loops; i++) {
@@ -170,6 +174,9 @@ export function StoryWizard() {
           src.connect(ambGain).connect(offlineCtx.destination);
           src.start((i * ambBuf.length) / sampleRate);
         }
+        console.log("Ambient mixed:", loops, "loops");
+      } else {
+        console.log("No ambient to mix");
       }
 
       // Effects at timestamps
@@ -178,7 +185,7 @@ export function StoryWizard() {
           const e = data.effects[i];
           try {
             const effBytes = Uint8Array.from(atob(e.audioBase64), (c) => c.charCodeAt(0));
-            const effBuf = await ctx.decodeAudioData(effBytes.buffer.slice(0));
+            const effBuf = await offlineCtx.decodeAudioData(effBytes.buffer.slice(0));
             const effSrc = offlineCtx.createBufferSource();
             effSrc.buffer = effBuf;
             const effGain = offlineCtx.createGain();
@@ -192,7 +199,6 @@ export function StoryWizard() {
       }
 
       const rendered = await offlineCtx.startRendering();
-      await ctx.close();
 
       // Convert to WAV blob
       const wavData = audioBufferToWav(rendered);
