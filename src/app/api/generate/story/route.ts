@@ -28,6 +28,7 @@ export async function POST(request: Request) {
         originalText,
         sourceType: sourceType || "other",
         model: selectedModel as "gemini-3.1-flash-lite-preview" | "gemini-3.1-pro-preview",
+        effort: effort || "high",
       });
     } else {
       childrenStory = await generateStory({
