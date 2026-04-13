@@ -1,4 +1,4 @@
-import { getClaudeClient } from "../claude/client";
+import { getGeminiClient } from "../gemini/client";
 
 const ELEVENLABS_SFX_URL = "https://api.elevenlabs.io/v1/sound-generation";
 
@@ -68,29 +68,32 @@ async function generateSfx(prompt: string): Promise<Buffer> {
   return Buffer.from(arrayBuffer);
 }
 
-// --- Claude audio analysis for timestamps ---
+// --- Gemini audio analysis for timestamps ---
 
 async function findEffectTimestamps(
   narrationBase64: string,
   effectLabels: string[]
 ): Promise<Map<string, number>> {
-  const client = getClaudeClient();
+  const ai = getGeminiClient();
 
   const labelList = effectLabels
     .map((label, i) => `${i + 1}. "${label}"`)
     .join("\n");
 
-  console.log("Asking Claude for effect timestamps...");
+  console.log("Asking Gemini for effect timestamps...");
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 1000,
-    messages: [
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: [
       {
-        role: "user",
-        content: [
+        parts: [
           {
-            type: "text",
+            inlineData: {
+              mimeType: "audio/mpeg",
+              data: narrationBase64,
+            },
+          },
+          {
             text: `Listen to this Hebrew audio narration. For each phrase below, tell me the approximate timestamp (in seconds) when it is spoken.
 
 ${labelList}
@@ -105,26 +108,12 @@ Example:
 
 Give only the numbers, no other text.`,
           },
-          {
-            // @ts-expect-error - media type supported by API but not yet in SDK types
-            type: "media",
-            source: {
-              type: "base64",
-              media_type: "audio/mpeg",
-              data: narrationBase64,
-            },
-          },
         ],
       },
     ],
   });
 
-  let text = "";
-  for (const block of response.content) {
-    if (block.type === "text") {
-      text += block.text + "\n";
-    }
-  }
+  const text = response.text ?? "";
 
   console.log("Claude timestamp response:", text);
 
