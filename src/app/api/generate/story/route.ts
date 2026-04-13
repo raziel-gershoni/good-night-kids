@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { generateStory } from "@/lib/claude/generate-story";
+import { generateStoryGemini } from "@/lib/gemini/generate-story";
+import type { StoryModel } from "@/lib/types";
 
 export const maxDuration = 300;
+
+function isGeminiModel(model: StoryModel): boolean {
+  return model.startsWith("gemini-");
+}
 
 export async function POST(request: Request) {
   try {
@@ -14,12 +20,23 @@ export async function POST(request: Request) {
       );
     }
 
-    const childrenStory = await generateStory({
-      originalText,
-      sourceType: sourceType || "other",
-      model: model || "claude-sonnet-4-6",
-      effort: effort || "high",
-    });
+    const selectedModel: StoryModel = model || "claude-sonnet-4-6";
+    let childrenStory: string;
+
+    if (isGeminiModel(selectedModel)) {
+      childrenStory = await generateStoryGemini({
+        originalText,
+        sourceType: sourceType || "other",
+        model: selectedModel as "gemini-3.1-flash-lite-preview" | "gemini-3.1-pro-preview",
+      });
+    } else {
+      childrenStory = await generateStory({
+        originalText,
+        sourceType: sourceType || "other",
+        model: selectedModel as "claude-sonnet-4-6" | "claude-opus-4-6",
+        effort: effort || "high",
+      });
+    }
 
     return NextResponse.json({ childrenStory });
   } catch (error) {

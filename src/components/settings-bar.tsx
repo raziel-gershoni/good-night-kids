@@ -1,18 +1,18 @@
 "use client";
 
 import {
-  CLAUDE_MODELS,
+  STORY_MODELS,
   EFFORT_LEVELS,
   TTS_VOICES,
-  type ClaudeModel,
+  type StoryModel,
   type EffortLevel,
 } from "@/lib/types";
 
 interface SettingsBarProps {
-  model: ClaudeModel;
+  model: StoryModel;
   effort: EffortLevel;
   voiceId: string;
-  onModelChange: (model: ClaudeModel) => void;
+  onModelChange: (model: StoryModel) => void;
   onEffortChange: (effort: EffortLevel) => void;
   onVoiceChange: (voiceId: string) => void;
 }
@@ -36,10 +36,10 @@ export function SettingsBar({
         <select
           id="model"
           value={model}
-          onChange={(e) => onModelChange(e.target.value as ClaudeModel)}
+          onChange={(e) => onModelChange(e.target.value as StoryModel)}
           className="bg-night-700 border border-night-600/50 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-gold-400"
         >
-          {CLAUDE_MODELS.map((m) => (
+          {STORY_MODELS.map((m) => (
             <option key={m.value} value={m.value}>
               {m.label}
             </option>

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.88.0",
+    "@google/genai": "^1.49.0",
     "@neondatabase/serverless": "^1.0.2",
     "drizzle-orm": "^0.45.2",
     "nanoid": "^5.1.7",

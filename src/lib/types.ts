@@ -1,12 +1,16 @@
 export type SourceType = "tanakh" | "gmara" | "zohar" | "midrash" | "other";
 
 export type ClaudeModel = "claude-sonnet-4-6" | "claude-opus-4-6";
+export type GeminiModel = "gemini-3.1-flash-lite-preview" | "gemini-3.1-pro-preview";
+export type StoryModel = ClaudeModel | GeminiModel;
 
 export type EffortLevel = "low" | "medium" | "high" | "max";
 
-export const CLAUDE_MODELS: { value: ClaudeModel; label: string }[] = [
-  { value: "claude-sonnet-4-6", label: "Sonnet 4.6 (מהיר)" },
-  { value: "claude-opus-4-6", label: "Opus 4.6 (מתקדם)" },
+export const STORY_MODELS: { value: StoryModel; label: string }[] = [
+  { value: "claude-sonnet-4-6", label: "Claude Sonnet 4.6" },
+  { value: "claude-opus-4-6", label: "Claude Opus 4.6" },
+  { value: "gemini-3.1-flash-lite-preview", label: "Gemini 3.1 Flash Lite" },
+  { value: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro" },
 ];
 
 export const EFFORT_LEVELS: { value: EffortLevel; label: string }[] = [
@@ -39,7 +43,7 @@ export interface StoryData {
   childrenStory?: string;
   ttsScript?: string;
   audioUrl?: string;
-  model: ClaudeModel;
+  model: StoryModel;
   effort: EffortLevel;
   voiceId: string;
 }
