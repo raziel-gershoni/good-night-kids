@@ -11,7 +11,7 @@ import type { StoryModel, EffortLevel, SourceType, SavedStory } from "@/lib/type
 
 export function StoryWizard() {
   // Settings
-  const [model, setModel] = useState<StoryModel>("claude-sonnet-4-6");
+  const [model, setModel] = useState<StoryModel>("gemini-3.1-flash-lite-preview");
   const [effort, setEffort] = useState<EffortLevel>("high");
   const [voiceId, setVoiceId] = useState("owHnXhz2H7U5Cv31srDU");
   const [sourceType, setSourceType] = useState<SourceType>("tanakh");
