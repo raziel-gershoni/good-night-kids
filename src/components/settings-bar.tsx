@@ -57,11 +57,13 @@ export function SettingsBar({
           onChange={(e) => onEffortChange(e.target.value as EffortLevel)}
           className="bg-night-700 border border-night-600/50 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-gold-400"
         >
-          {EFFORT_LEVELS.map((e) => (
-            <option key={e.value} value={e.value}>
-              {e.label}
-            </option>
-          ))}
+          {EFFORT_LEVELS
+            .filter((e) => e.value !== "max" || !model.startsWith("gemini-"))
+            .map((e) => (
+              <option key={e.value} value={e.value}>
+                {e.label}
+              </option>
+            ))}
         </select>
       </div>
 
