@@ -121,8 +121,8 @@ export function AudioPlayer({
   const handleDownload = useCallback(async () => {
     if (!audioUrl) return;
 
-    if (!ambientUrl) {
-      // No ambient - download narration directly
+    if (!ambientUrl && effects.length === 0) {
+      // No ambient or effects - download narration directly
       const a = document.createElement("a");
       a.href = audioUrl;
       a.download = "bedtime-story.mp3";
@@ -130,23 +130,24 @@ export function AudioPlayer({
       return;
     }
 
-    // Mix narration + ambient into single WAV
+    // Mix narration + ambient + effects into single WAV
     setIsMixing(true);
     try {
-      const [narrationResp, ambientResp] = await Promise.all([
-        fetch(audioUrl).then((r) => r.arrayBuffer()),
-        fetch(ambientUrl).then((r) => r.arrayBuffer()),
-      ]);
-
       const tempCtx = new AudioContext();
-      const [narrationBuf, ambientBuf] = await Promise.all([
-        tempCtx.decodeAudioData(narrationResp),
-        tempCtx.decodeAudioData(ambientResp),
-      ]);
+      const narrationBuf = await tempCtx.decodeAudioData(
+        await fetch(audioUrl).then((r) => r.arrayBuffer())
+      );
+      let ambientBuf: AudioBuffer | null = null;
+      if (ambientUrl) {
+        ambientBuf = await tempCtx.decodeAudioData(
+          await fetch(ambientUrl).then((r) => r.arrayBuffer())
+        );
+      }
       await tempCtx.close();
 
       const sampleRate = narrationBuf.sampleRate;
       const fadeout = 4;
+      const narDuration = narrationBuf.length / sampleRate;
       const totalLength = narrationBuf.length + fadeout * sampleRate;
       const offlineCtx = new OfflineAudioContext(1, totalLength, sampleRate);
 
@@ -156,19 +157,35 @@ export function AudioPlayer({
       narSrc.connect(offlineCtx.destination);
       narSrc.start(0);
 
-      // Ambient loop with fadeout
-      const ambGain = offlineCtx.createGain();
-      const narDuration = narrationBuf.length / sampleRate;
-      ambGain.gain.setValueAtTime(ambientVolume, 0);
-      ambGain.gain.setValueAtTime(ambientVolume, narDuration);
-      ambGain.gain.linearRampToValueAtTime(0, narDuration + fadeout);
+      // Ambient loop with fadeout (if available)
+      if (ambientBuf) {
+        const ambGain = offlineCtx.createGain();
+        ambGain.gain.setValueAtTime(ambientVolume, 0);
+        ambGain.gain.setValueAtTime(ambientVolume, narDuration);
+        ambGain.gain.linearRampToValueAtTime(0, narDuration + fadeout);
 
-      const loops = Math.ceil(totalLength / ambientBuf.length);
-      for (let i = 0; i < loops; i++) {
-        const src = offlineCtx.createBufferSource();
-        src.buffer = ambientBuf;
-        src.connect(ambGain).connect(offlineCtx.destination);
-        src.start((i * ambientBuf.length) / sampleRate);
+        const loops = Math.ceil(totalLength / ambientBuf.length);
+        for (let i = 0; i < loops; i++) {
+          const src = offlineCtx.createBufferSource();
+          src.buffer = ambientBuf;
+          src.connect(ambGain).connect(offlineCtx.destination);
+          src.start((i * ambientBuf.length) / sampleRate);
+        }
+      }
+
+      // Effects at their timestamps
+      for (const effect of effects) {
+        try {
+          const effResp = await fetch(effect.audioUrl);
+          const effBuf = await offlineCtx.decodeAudioData(await effResp.arrayBuffer());
+          const effSrc = offlineCtx.createBufferSource();
+          effSrc.buffer = effBuf;
+          const effGain = offlineCtx.createGain();
+          effGain.gain.value = 0.7;
+          effSrc.connect(effGain).connect(offlineCtx.destination);
+          const time = effect.timestampSeconds ?? (effect.fallbackPosition > 0 ? effect.fallbackPosition * narDuration : 0);
+          effSrc.start(time);
+        } catch { /* skip failed effect */ }
       }
 
       const rendered = await offlineCtx.startRendering();
@@ -190,7 +207,7 @@ export function AudioPlayer({
     } finally {
       setIsMixing(false);
     }
-  }, [audioUrl, ambientUrl, ambientVolume]);
+  }, [audioUrl, ambientUrl, ambientVolume, effects]);
 
   if (isLoading) {
     return (

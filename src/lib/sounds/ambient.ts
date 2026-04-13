@@ -182,6 +182,7 @@ export async function generateAllSounds(params: {
   narrationBase64?: string;
 }): Promise<{
   ambientBase64: string | null;
+  ambientError: string | null;
   effects: { label: string; timestampSeconds: number | null; audioBase64: string }[];
 }> {
   const soundDesign = parseSoundDesign(params.storyText);
@@ -210,7 +211,15 @@ export async function generateAllSounds(params: {
   }
 
   // 2. Generate ambient
-  const ambientBuffer = await generateAmbientSound(ambientPrompt);
+  let ambientError: string | null = null;
+  let ambientBuffer: Buffer | null = null;
+  try {
+    ambientBuffer = await generateAmbientSound(ambientPrompt);
+    if (!ambientBuffer) ambientError = "Ambient returned null (unknown error)";
+  } catch (err) {
+    ambientError = err instanceof Error ? err.message : String(err);
+    console.error("Ambient generation failed:", ambientError);
+  }
 
   // 3. Generate effects sequentially (rate limit)
   const effectResults: { label: string; timestampSeconds: number | null; audioBase64: string }[] = [];
@@ -229,6 +238,7 @@ export async function generateAllSounds(params: {
 
   return {
     ambientBase64: ambientBuffer?.toString("base64") ?? null,
+    ambientError,
     effects: effectResults,
   };
 }
