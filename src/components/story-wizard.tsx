@@ -423,7 +423,7 @@ export function StoryWizard() {
               <h3 className="text-sm font-bold text-gold-400">אפקטים</h3>
               <button
                 onClick={generateEffects}
-                disabled={isGeneratingEffects || !effectsText.trim()}
+                disabled={isGeneratingEffects || !effectsText.trim() || !audioBase64}
                 className="px-3 py-1 bg-gold-500 hover:bg-gold-400 disabled:bg-night-600 disabled:text-gray-500 text-night-900 text-sm font-bold rounded-lg transition-colors flex items-center gap-1"
               >
                 {isGeneratingEffects && (
