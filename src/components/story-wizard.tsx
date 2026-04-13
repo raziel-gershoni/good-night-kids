@@ -13,7 +13,7 @@ export function StoryWizard() {
   // Settings
   const [model, setModel] = useState<StoryModel>("claude-sonnet-4-6");
   const [effort, setEffort] = useState<EffortLevel>("high");
-  const [voiceId, setVoiceId] = useState("JiKFunrRggP9Jl3AcoUw");
+  const [voiceId, setVoiceId] = useState("owHnXhz2H7U5Cv31srDU");
   const [sourceType, setSourceType] = useState<SourceType>("tanakh");
 
   // Content

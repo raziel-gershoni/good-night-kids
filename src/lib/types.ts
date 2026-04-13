@@ -31,7 +31,8 @@ export const SOURCE_TYPES: { value: SourceType; label: string }[] = [
 // ElevenLabs Hebrew-compatible voices
 // These are default ElevenLabs voices - user can find voice IDs from their library
 export const TTS_VOICES: { value: string; label: string }[] = [
-  { value: "JiKFunrRggP9Jl3AcoUw", label: "ברירת מחדל" },
+  { value: "owHnXhz2H7U5Cv31srDU", label: "קול 1" },
+  { value: "JiKFunrRggP9Jl3AcoUw", label: "קול 2" },
 ];
 
 export interface StoryData {
