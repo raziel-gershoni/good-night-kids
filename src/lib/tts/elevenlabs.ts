@@ -57,70 +57,37 @@ export async function generateSpeech(params: {
 }
 
 /**
- * Strip nikud and audio tags from text for matching
- */
-function normalize(text: string): string {
-  return text
-    .replace(/[\u0591-\u05C7]/g, "") // strip nikud
-    .replace(/\[.*?\]/g, "")         // strip [tags]
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-/**
- * Find the timestamp (in seconds) when a phrase starts in the TTS output.
- * Uses character-level alignment from ElevenLabs.
+ * Find the timestamp when a phrase is spoken.
+ * Simple: join alignment chars into full text, find the phrase, map index back to timestamp.
  */
 export function findPhraseTimestamp(
   alignment: TtsAlignment,
   phrase: string
 ): number | null {
-  const cleanPhrase = normalize(phrase);
-  const words = cleanPhrase.split(/\s+/).filter(w => w.length >= 2);
-  if (words.length === 0) return null;
+  // Strip nikud from both phrase and alignment text
+  const strip = (s: string) => s.replace(/[\u0591-\u05C7]/g, "");
 
-  // Build a clean version of the text with index mapping back to alignment
-  // Each entry: { cleanChar, alignmentIndex }
-  const mapped: { char: string; alignIdx: number }[] = [];
-  let inTag = false;
-  for (let i = 0; i < alignment.characters.length; i++) {
-    const ch = alignment.characters[i];
-    if (ch === "[") { inTag = true; continue; }
-    if (ch === "]") { inTag = false; continue; }
-    if (inTag) continue;
-    // Strip nikud
-    const clean = ch.replace(/[\u0591-\u05C7]/g, "");
-    if (clean) {
-      mapped.push({ char: clean, alignIdx: i });
+  const cleanPhrase = strip(phrase);
+  const fullText = alignment.characters.join("");
+  const cleanText = strip(fullText);
+
+  const matchIdx = cleanText.indexOf(cleanPhrase);
+  if (matchIdx === -1) return null;
+
+  // Map cleanText index back to alignment index
+  // Walk through fullText, skipping nikud chars, counting clean chars
+  let cleanCount = 0;
+  for (let i = 0; i < fullText.length; i++) {
+    if (cleanCount === matchIdx) {
+      // Find this position in the alignment characters array
+      // alignment.characters are individual chars, so position i in fullText = index i in alignment
+      return alignment.character_start_times_seconds[i] ?? null;
+    }
+    const ch = fullText[i];
+    if (strip(ch).length > 0) {
+      cleanCount++;
     }
   }
 
-  const cleanText = mapped.map(m => m.char).join("");
-
-  // Try full phrase first
-  let matchIdx = cleanText.indexOf(cleanPhrase);
-
-  // Try each word if full phrase not found
-  if (matchIdx === -1) {
-    for (const word of words) {
-      matchIdx = cleanText.indexOf(word);
-      if (matchIdx !== -1) {
-        console.log(`  Matched word "${word}" at cleanIdx ${matchIdx}`);
-        break;
-      }
-    }
-  }
-
-  if (matchIdx === -1) {
-    console.log(`  No match for "${cleanPhrase}" (words: ${words.join(", ")})`);
-    return null;
-  }
-
-  // Map back to alignment index
-  const alignIdx = mapped[matchIdx]?.alignIdx;
-  if (alignIdx === undefined) return null;
-
-  const timestamp = alignment.character_start_times_seconds[alignIdx];
-  console.log(`  Found at alignIdx ${alignIdx}, timestamp ${timestamp?.toFixed(2)}s`);
-  return timestamp ?? null;
+  return null;
 }
