@@ -64,27 +64,29 @@ export function findPhraseTimestamp(
   alignment: TtsAlignment,
   phrase: string
 ): number | null {
-  // Strip nikud from both phrase and alignment text
-  const strip = (s: string) => s.replace(/[\u0591-\u05C7]/g, "");
-
-  const cleanPhrase = strip(phrase);
   const fullText = alignment.characters.join("");
+
+  // Try exact match first (with nikud as-is)
+  let matchIdx = fullText.indexOf(phrase);
+  if (matchIdx !== -1) {
+    return alignment.character_start_times_seconds[matchIdx] ?? null;
+  }
+
+  // Fallback: strip nikud from both sides
+  const strip = (s: string) => s.replace(/[\u0591-\u05C7]/g, "");
+  const cleanPhrase = strip(phrase);
   const cleanText = strip(fullText);
 
-  const matchIdx = cleanText.indexOf(cleanPhrase);
+  matchIdx = cleanText.indexOf(cleanPhrase);
   if (matchIdx === -1) return null;
 
-  // Map cleanText index back to alignment index
-  // Walk through fullText, skipping nikud chars, counting clean chars
+  // Map clean index back to alignment index
   let cleanCount = 0;
   for (let i = 0; i < fullText.length; i++) {
     if (cleanCount === matchIdx) {
-      // Find this position in the alignment characters array
-      // alignment.characters are individual chars, so position i in fullText = index i in alignment
       return alignment.character_start_times_seconds[i] ?? null;
     }
-    const ch = fullText[i];
-    if (strip(ch).length > 0) {
+    if (strip(fullText[i]).length > 0) {
       cleanCount++;
     }
   }
