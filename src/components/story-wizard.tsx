@@ -156,13 +156,22 @@ export function StoryWizard() {
       setAudioBase64(data.audioBase64);
       setTtsAlignment(data.alignment || null);
       if (data.alignment) {
-        const fullText = data.alignment.characters?.join("") || "";
-        console.log("TTS alignment received:", {
-          charCount: data.alignment.characters?.length,
-          textPreview: fullText.slice(0, 200),
-          firstTimestamp: data.alignment.character_start_times_seconds?.[0],
-          lastTimestamp: data.alignment.character_start_times_seconds?.slice(-1)[0],
+        const chars = data.alignment.characters;
+        const starts = data.alignment.character_start_times_seconds;
+        const fullText = chars?.join("") || "";
+        console.log("TTS alignment:", {
+          arrayLength: chars?.length,
+          stringLength: fullText.length,
+          sameLength: chars?.length === fullText.length,
+          firstTimestamp: starts?.[0],
+          lastTimestamp: starts?.slice(-1)[0],
         });
+        // Log first 20 elements raw
+        console.log("First 20 alignment elements:");
+        for (let i = 0; i < Math.min(20, chars?.length || 0); i++) {
+          console.log(`  [${i}] char="${chars[i]}" (len=${chars[i].length}) start=${starts[i]}`);
+        }
+        console.log("Text preview:", fullText.slice(0, 200));
       } else {
         console.log("No alignment data from TTS");
       }
