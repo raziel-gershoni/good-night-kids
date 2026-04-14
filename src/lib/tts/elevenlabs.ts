@@ -66,30 +66,18 @@ export function findPhraseTimestamp(
 ): number | null {
   const fullText = alignment.characters.join("");
 
-  // Try exact match first (with nikud as-is)
-  let matchIdx = fullText.indexOf(phrase);
-  if (matchIdx !== -1) {
-    return alignment.character_start_times_seconds[matchIdx] ?? null;
-  }
-
-  // Fallback: strip nikud from both sides
-  const strip = (s: string) => s.replace(/[\u0591-\u05C7]/g, "");
-  const cleanPhrase = strip(phrase);
-  const cleanText = strip(fullText);
-
-  matchIdx = cleanText.indexOf(cleanPhrase);
-  if (matchIdx === -1) return null;
-
-  // Map clean index back to alignment index
-  let cleanCount = 0;
-  for (let i = 0; i < fullText.length; i++) {
-    if (cleanCount === matchIdx) {
-      return alignment.character_start_times_seconds[i] ?? null;
-    }
-    if (strip(fullText[i]).length > 0) {
-      cleanCount++;
+  // Map from string position to alignment array index
+  // Each characters[] element can be 1+ chars (base + combining marks)
+  const posToIdx: number[] = [];
+  for (let i = 0; i < alignment.characters.length; i++) {
+    for (let j = 0; j < alignment.characters[i].length; j++) {
+      posToIdx.push(i);
     }
   }
 
-  return null;
+  const matchPos = fullText.indexOf(phrase);
+  if (matchPos === -1) return null;
+
+  const arrIdx = posToIdx[matchPos];
+  return alignment.character_start_times_seconds[arrIdx] ?? null;
 }
