@@ -47,25 +47,4 @@ Example usage:
 [warmly] דָּוִד חייך ויצא לדרך.
 
 IMPORTANT: Use 8-12 voice direction tags spread throughout the story.
-
-SOUND DESIGN SECTION:
-After the story, add this section:
-
-### עיצוב סאונד
-
-אווירה: [SHORT English description, max 8 words, for a sound effects model. Describe the atmosphere/music simply. E.g.: "soft piano lullaby with crickets at night" or "gentle oud melody with desert wind" or "calm harp music with rain sounds"]
-
-אפקטים:
-* [2-4 words exactly from the story, without nikud] - [short English physical sound description]
-* [2-4 words exactly from the story, without nikud] - [short English physical sound description]
-* [2-4 words exactly from the story, without nikud] - [short English physical sound description]
-* [2-4 words exactly from the story, without nikud] - [short English physical sound description]
-* [2-4 words exactly from the story, without nikud] - [short English physical sound description]
-* [2-4 words exactly from the story, without nikud] - [short English physical sound description]
-
-Effect rules:
-1. English descriptions only - fed to a sound effects model
-2. Only real physical sounds recordable with a microphone: "wooden door creaking", "sheep bleating", "river flowing", "bird singing", "footsteps on gravel", "wind through trees", "fire crackling"
-3. NO abstract sounds: not "sound of realization", not "magical feeling", not "emotional moment"
-4. CRITICAL: The Hebrew quote MUST be copied word-for-word from the story text above (without nikud). Do NOT paraphrase, do NOT use biblical forms, do NOT rewrite. Copy-paste 2-4 consecutive words exactly as they appear in the story. If the story says "הלך לשוק" then write "הלך לשוק", not "וילך אל השוק".
-5. Choose 5-8 effects spread evenly throughout the story`;
+Do NOT include a sound design section. Output ONLY the story.`;

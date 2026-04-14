@@ -17,25 +17,6 @@ interface EffectBlob {
   audioUrl: string;
 }
 
-function parseSoundDesignSection(story: string): { ambient: string; effects: string } {
-  const marker = "### עיצוב סאונד";
-  const idx = story.indexOf(marker);
-  if (idx === -1) return { ambient: "", effects: "" };
-  const section = story.slice(idx + marker.length).trim();
-
-  const ambientMatch = section.match(/אווירה:\s*(.+)/);
-  const ambient = ambientMatch?.[1]?.trim() || "";
-
-  const effectLines: string[] = [];
-  const regex = /(?:\*|-|•)\s*(.+)/g;
-  let match;
-  while ((match = regex.exec(section)) !== null) {
-    effectLines.push(match[1].trim());
-  }
-  const effects = effectLines.join("\n");
-
-  return { ambient, effects };
-}
 
 function parseEffectsText(text: string): { label: string; prompt: string }[] {
   const results: { label: string; prompt: string }[] = [];
@@ -74,6 +55,7 @@ export function StoryWizard() {
   const [isGeneratingStory, setIsGeneratingStory] = useState(false);
   const [isVocalizing, setIsVocalizing] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [isGeneratingSoundDesign, setIsGeneratingSoundDesign] = useState(false);
   const [isGeneratingAmbient, setIsGeneratingAmbient] = useState(false);
   const [isGeneratingEffects, setIsGeneratingEffects] = useState(false);
   const [isMixing, setIsMixing] = useState(false);
@@ -105,11 +87,8 @@ export function StoryWizard() {
       setIsMixed(false);
       setAmbientBlob(null);
       setEffectBlobs([]);
-
-      // Auto-populate sound design inputs
-      const { ambient, effects } = parseSoundDesignSection(data.childrenStory);
-      setAmbientPrompt(ambient);
-      setEffectsText(effects);
+      setAmbientPrompt("");
+      setEffectsText("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה ביצירת הסיפור");
     } finally {
@@ -137,6 +116,27 @@ export function StoryWizard() {
       setError(err instanceof Error ? err.message : "שגיאה בניקוד הטקסט");
     } finally {
       setIsVocalizing(false);
+    }
+  }, [childrenStory]);
+
+  // Generate sound design from the story
+  const generateSoundDesign = useCallback(async () => {
+    clearError();
+    setIsGeneratingSoundDesign(true);
+    try {
+      const res = await fetch("/api/generate/sound-design", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ childrenStory }),
+      });
+      if (!res.ok) throw new Error("Failed to generate sound design");
+      const data = await res.json();
+      setAmbientPrompt(data.ambient || "");
+      setEffectsText(data.effects || "");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "שגיאה ביצירת עיצוב סאונד");
+    } finally {
+      setIsGeneratingSoundDesign(false);
     }
   }, [childrenStory]);
 
@@ -406,8 +406,25 @@ export function StoryWizard() {
         )}
       </StepSection>
 
+      {/* Generate sound design button */}
+      {childrenStory && !ambientPrompt && !effectsText && (
+        <button
+          onClick={generateSoundDesign}
+          disabled={isGeneratingSoundDesign}
+          className="px-5 py-2 bg-night-700 hover:bg-night-600 disabled:bg-night-800 disabled:text-gray-600 text-white font-bold rounded-xl transition-colors flex items-center gap-2 border border-night-600/50"
+        >
+          {isGeneratingSoundDesign && (
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          )}
+          {isGeneratingSoundDesign ? "מייצר עיצוב סאונד..." : "צור עיצוב סאונד"}
+        </button>
+      )}
+
       {/* Sound design inputs */}
-      {childrenStory && (
+      {(ambientPrompt || effectsText) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Ambient */}
           <div className="space-y-2">
