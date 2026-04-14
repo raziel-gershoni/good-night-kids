@@ -67,5 +67,5 @@ Effect rules:
 1. English descriptions only - fed to a sound effects model
 2. Only real physical sounds recordable with a microphone: "wooden door creaking", "sheep bleating", "river flowing", "bird singing", "footsteps on gravel", "wind through trees", "fire crackling"
 3. NO abstract sounds: not "sound of realization", not "magical feeling", not "emotional moment"
-4. The Hebrew quote must be exact words from the story above (without nikud) so we can find when they're spoken in the audio
+4. CRITICAL: The Hebrew quote MUST be copied word-for-word from the story text above (without nikud). Do NOT paraphrase, do NOT use biblical forms, do NOT rewrite. Copy-paste 2-4 consecutive words exactly as they appear in the story. If the story says "הלך לשוק" then write "הלך לשוק", not "וילך אל השוק".
 5. Choose 5-8 effects spread evenly throughout the story`;

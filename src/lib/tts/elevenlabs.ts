@@ -57,6 +57,17 @@ export async function generateSpeech(params: {
 }
 
 /**
+ * Strip nikud and audio tags from text for matching
+ */
+function normalize(text: string): string {
+  return text
+    .replace(/[\u0591-\u05C7]/g, "") // strip nikud
+    .replace(/\[.*?\]/g, "")         // strip [tags]
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
  * Find the timestamp (in seconds) when a phrase starts in the TTS output.
  * Uses character-level alignment from ElevenLabs.
  */
@@ -64,33 +75,52 @@ export function findPhraseTimestamp(
   alignment: TtsAlignment,
   phrase: string
 ): number | null {
-  // Reconstruct the full text from alignment characters
-  const fullText = alignment.characters.join("");
+  const cleanPhrase = normalize(phrase);
+  const words = cleanPhrase.split(/\s+/).filter(w => w.length >= 2);
+  if (words.length === 0) return null;
 
-  // Find the phrase in the full text (try with and without nikud)
-  const cleanPhrase = phrase.replace(/[\u0591-\u05C7]/g, "");
-  const cleanText = fullText.replace(/[\u0591-\u05C7]/g, "");
-
-  let charIdx = cleanText.indexOf(cleanPhrase);
-  if (charIdx === -1) {
-    // Try fuzzy: just first few words
-    const shortPhrase = cleanPhrase.split(/\s+/).slice(0, 2).join(" ");
-    if (shortPhrase.length >= 3) {
-      charIdx = cleanText.indexOf(shortPhrase);
-    }
-  }
-
-  if (charIdx === -1) return null;
-
-  // Map clean text index back to original alignment index
-  let cleanIdx = 0;
+  // Build a clean version of the text with index mapping back to alignment
+  // Each entry: { cleanChar, alignmentIndex }
+  const mapped: { char: string; alignIdx: number }[] = [];
+  let inTag = false;
   for (let i = 0; i < alignment.characters.length; i++) {
-    const cleanChar = alignment.characters[i].replace(/[\u0591-\u05C7]/g, "");
-    if (cleanIdx === charIdx && cleanChar.length > 0) {
-      return alignment.character_start_times_seconds[i];
+    const ch = alignment.characters[i];
+    if (ch === "[") { inTag = true; continue; }
+    if (ch === "]") { inTag = false; continue; }
+    if (inTag) continue;
+    // Strip nikud
+    const clean = ch.replace(/[\u0591-\u05C7]/g, "");
+    if (clean) {
+      mapped.push({ char: clean, alignIdx: i });
     }
-    cleanIdx += cleanChar.length;
   }
 
-  return null;
+  const cleanText = mapped.map(m => m.char).join("");
+
+  // Try full phrase first
+  let matchIdx = cleanText.indexOf(cleanPhrase);
+
+  // Try each word if full phrase not found
+  if (matchIdx === -1) {
+    for (const word of words) {
+      matchIdx = cleanText.indexOf(word);
+      if (matchIdx !== -1) {
+        console.log(`  Matched word "${word}" at cleanIdx ${matchIdx}`);
+        break;
+      }
+    }
+  }
+
+  if (matchIdx === -1) {
+    console.log(`  No match for "${cleanPhrase}" (words: ${words.join(", ")})`);
+    return null;
+  }
+
+  // Map back to alignment index
+  const alignIdx = mapped[matchIdx]?.alignIdx;
+  if (alignIdx === undefined) return null;
+
+  const timestamp = alignment.character_start_times_seconds[alignIdx];
+  console.log(`  Found at alignIdx ${alignIdx}, timestamp ${timestamp?.toFixed(2)}s`);
+  return timestamp ?? null;
 }
