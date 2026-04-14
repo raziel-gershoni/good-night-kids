@@ -21,6 +21,11 @@ export async function POST(request: Request) {
       const effectList: { label: string; prompt: string }[] = effects || [];
       const ttsAlignment: TtsAlignment | null = alignment || null;
       console.log("Generating effects:", effectList.length, "hasAlignment:", !!ttsAlignment);
+      if (ttsAlignment) {
+        const fullText = ttsAlignment.characters.join("");
+        console.log("Alignment text length:", fullText.length, "chars, preview:", fullText.slice(0, 150));
+        console.log("Alignment time range:", ttsAlignment.character_start_times_seconds[0], "-", ttsAlignment.character_start_times_seconds.slice(-1)[0], "seconds");
+      }
 
       // Find timestamps from TTS alignment data
       const timestamps = new Map<string, number>();

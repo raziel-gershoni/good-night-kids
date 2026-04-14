@@ -155,6 +155,17 @@ export function StoryWizard() {
       const data = await res.json();
       setAudioBase64(data.audioBase64);
       setTtsAlignment(data.alignment || null);
+      if (data.alignment) {
+        const fullText = data.alignment.characters?.join("") || "";
+        console.log("TTS alignment received:", {
+          charCount: data.alignment.characters?.length,
+          textPreview: fullText.slice(0, 200),
+          firstTimestamp: data.alignment.character_start_times_seconds?.[0],
+          lastTimestamp: data.alignment.character_start_times_seconds?.slice(-1)[0],
+        });
+      } else {
+        console.log("No alignment data from TTS");
+      }
       const blob = new Blob(
         [Uint8Array.from(atob(data.audioBase64), (c) => c.charCodeAt(0))],
         { type: data.mimeType }
@@ -416,7 +427,12 @@ export function StoryWizard() {
               className="w-full bg-night-800 border border-night-600/50 rounded-xl p-3 text-white text-sm resize-y focus:outline-none focus:border-gold-400"
               dir="ltr"
             />
-            {ambientBlob && <span className="text-xs text-green-400">✓ אווירה מוכנה</span>}
+            {ambientBlob && (
+              <div className="space-y-1">
+                <span className="text-xs text-green-400">✓ אווירה מוכנה</span>
+                <audio controls src={ambientBlob} loop className="w-full h-8" />
+              </div>
+            )}
           </div>
 
           {/* Effects */}
