@@ -20,6 +20,10 @@ export async function POST(request: Request) {
     let textForTts = soundIdx !== -1 ? ttsScript.slice(0, soundIdx).trim() : ttsScript;
     textForTts = textForTts.replace(/\[.*?\]/g, "").replace(/\s+/g, " ").trim();
 
+    console.log("=== NARRATE: TTS INPUT ===");
+    console.log("Length:", textForTts.length);
+    console.log("Full text:", textForTts);
+
     const { audioBuffer, alignment } = await generateSpeech({
       text: textForTts,
       voiceId: voiceId || "owHnXhz2H7U5Cv31srDU",

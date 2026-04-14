@@ -26,15 +26,27 @@ export async function POST(request: Request) {
       const timestamps = new Map<string, number>();
       if (ttsAlignment) {
         const fullText = ttsAlignment.characters.join("");
-        console.log("Alignment text preview:", fullText.replace(/\[.*?\]/g, "").slice(0, 150));
+        console.log("=== EFFECTS: ALIGNMENT TEXT ===");
+        console.log("Length:", fullText.length);
+        console.log("Full text:", fullText);
+        console.log("Last timestamp:", ttsAlignment.character_start_times_seconds.slice(-1)[0]);
 
         for (const e of effectList) {
+          // Show exactly where indexOf finds the phrase
+          const matchPos = fullText.indexOf(e.label);
+          console.log(`\nSearching: "${e.label}"`);
+          console.log(`  indexOf result: ${matchPos}`);
+          if (matchPos !== -1) {
+            console.log(`  Context: ...${fullText.slice(Math.max(0, matchPos - 20), matchPos)}>>>HERE>>>${fullText.slice(matchPos, matchPos + e.label.length)}<<<${fullText.slice(matchPos + e.label.length, matchPos + e.label.length + 20)}...`);
+            console.log(`  Timestamp at pos ${matchPos}: ${ttsAlignment.character_start_times_seconds[matchPos]}`);
+          }
+
           const time = findPhraseTimestamp(ttsAlignment, e.label);
           if (time !== null) {
             timestamps.set(e.label, time);
-            console.log(`Timestamp for "${e.label}": ${time.toFixed(2)}s`);
+            console.log(`  → Final timestamp: ${time.toFixed(2)}s`);
           } else {
-            console.log(`No timestamp found for "${e.label}"`);
+            console.log(`  → NO TIMESTAMP`);
           }
         }
       }
