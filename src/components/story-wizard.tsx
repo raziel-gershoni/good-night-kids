@@ -224,6 +224,7 @@ export function StoryWizard() {
       });
       if (!res.ok) throw new Error("Failed to generate effects");
       const data = await res.json();
+      console.log("Effects response:", data.effects?.map((e: { label: string; timestampSeconds: number | null }) => `${e.label}: ${e.timestampSeconds !== null ? e.timestampSeconds.toFixed(2) + "s" : "NO TIMESTAMP"}`));
       const blobs: EffectBlob[] = (data.effects || []).map(
         (e: { label: string; prompt: string; timestampSeconds: number | null; audioBase64: string }) => ({
           label: e.label,
@@ -274,8 +275,8 @@ export function StoryWizard() {
         const ambResp = await fetch(ambientBlob);
         const ambBuf = await offlineCtx.decodeAudioData(await ambResp.arrayBuffer());
         const ambGain = offlineCtx.createGain();
-        ambGain.gain.setValueAtTime(1.0, 0);
-        ambGain.gain.setValueAtTime(1.0, narDuration);
+        ambGain.gain.setValueAtTime(0.5, 0);
+        ambGain.gain.setValueAtTime(0.5, narDuration);
         ambGain.gain.linearRampToValueAtTime(0, narDuration + fadeout);
         const loops = Math.ceil(totalLength / ambBuf.length);
         for (let i = 0; i < loops; i++) {

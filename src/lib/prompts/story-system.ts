@@ -53,7 +53,7 @@ After the story, add this section:
 
 ### עיצוב סאונד
 
-אווירה: [English description for ambient background. Must end with "instrumental only, absolutely no vocals, no singing, no humming, seamless loop". E.g.: "Gentle bedtime lullaby with soft piano, nighttime countryside sounds, soft breeze, calm atmosphere, instrumental only, absolutely no vocals, no singing, no humming, seamless loop"]
+אווירה: [SHORT English description, max 8 words, for a sound effects model. Describe the atmosphere/music simply. E.g.: "soft piano lullaby with crickets at night" or "gentle oud melody with desert wind" or "calm harp music with rain sounds"]
 
 אפקטים:
 * [2-4 words exactly from the story, without nikud] - [short English physical sound description]
