@@ -213,6 +213,12 @@ export function StoryWizard() {
     clearError();
     setIsGeneratingEffects(true);
     try {
+      console.log("Sending effects request:", {
+        effectCount: parsed.length,
+        labels: parsed.map(e => e.label),
+        hasAlignment: !!ttsAlignment,
+        alignmentCharCount: (ttsAlignment as { characters?: string[] })?.characters?.length,
+      });
       const res = await fetch("/api/generate/sounds", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
