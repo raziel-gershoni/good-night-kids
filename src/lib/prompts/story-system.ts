@@ -26,25 +26,6 @@ STORY RULES:
 8. No scary, violent, or overly complex content
 9. Handle raw copy-paste formatting: ignore verse numbers, chapter markers, taamei hamikra, Daf/Amud references, footnotes, and other artifacts. Use nikud from input to understand the text correctly.
 
-VOICE DIRECTION TAGS (ElevenLabs v3):
-Embed these inline throughout the story to control voice delivery.
-The TTS model will interpret them as instructions - they will NOT be spoken aloud.
-Do NOT use sound effect tags - only voice direction.
-
-Emotion/delivery tags (use frequently throughout the story):
-[soft], [excited], [cheerfully], [calm], [awe], [dramatic tone], [playfully], [warmly], [gently]
-
-Pacing tags:
-[pause], [slowly], [long pause]
-
-Character voice tags (for dialogue):
-[deep voice], [high pitched], [old voice], [young voice], [booming voice]
-
-Example usage:
-[soft] פעם, לפני הרבה הרבה שנים, [pause] חי לו רועה צעיר בשם דָּוִד.
-[excited] יום אחד, כשדָּוִד שמר על הצאן, הגיע שליח מהמלך!
-[deep voice] "דָּוִד! המלך קורא לך!" [pause]
-[warmly] דָּוִד חייך ויצא לדרך.
-
-IMPORTANT: Use 8-12 voice direction tags spread throughout the story.
-Do NOT include a sound design section. Output ONLY the story.`;
+Do NOT include any tags in square brackets like [soft], [pause], etc.
+Do NOT include a sound design section.
+Output ONLY the plain Hebrew story text.`;
