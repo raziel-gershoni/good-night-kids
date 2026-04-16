@@ -40,5 +40,14 @@ Available tags:
 CORRECT: [excited] יום אחד הוא יצא לדרך.
 WRONG: יום אחד הוא יצא לדרך. [excited]
 
+DIALOGUE DIRECTION:
+Before every line of direct speech, add a tag that matches the character's emotion and personality.
+Make dialogue feel dramatically different from narration - like a storyteller doing character impressions.
+Use [shouting] for strong characters, [whispers] for secrets, [trembling] for fear, [mischievously] for tricksters, [serious] for authority, [giggles] for children.
+Example:
+[calm] הסבתא הביטה בו ואמרה: [serious] "אתה חייב להיות אמיץ, ילד שלי."
+[trembling] "אבל אני מפחד!" אמר הילד הקטן.
+[confidence] "אני מבטיחה לך שהכל יהיה בסדר," [whispers] "תמיד."
+
 Use 15-20 tags spread throughout the story, one per 1-2 sentences. Every paragraph should have at least one tag.
 Do NOT include a sound design section. Output ONLY the story with embedded tags.`;
