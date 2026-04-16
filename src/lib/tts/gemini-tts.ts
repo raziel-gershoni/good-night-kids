@@ -94,7 +94,13 @@ export async function generateSpeechGemini(params: {
         if (attempt === 2) throw err;
       }
     }
-    if (pcm) pcmChunks.push(pcm);
+    if (pcm) {
+      pcmChunks.push(pcm);
+      // Add 0.5s silence between chunks (24000 samples/s × 2 bytes × 0.5s = 24000 bytes)
+      if (i < chunks.length - 1) {
+        pcmChunks.push(Buffer.alloc(24000));
+      }
+    }
   }
 
   // Concatenate all PCM chunks and wrap in single WAV header
