@@ -41,14 +41,28 @@ export const ELEVENLABS_VOICES: { value: string; label: string }[] = [
 ];
 
 export const GEMINI_TTS_VOICES: { value: string; label: string }[] = [
-  { value: "Aoede", label: "Aoede (חם)" },
-  { value: "Kore", label: "Kore (יציב)" },
-  { value: "Leda", label: "Leda (צעיר)" },
-  { value: "Puck", label: "Puck (עליז)" },
-  { value: "Charon", label: "Charon (מידעי)" },
-  { value: "Enceladus", label: "Enceladus (רך)" },
-  { value: "Fenrir", label: "Fenrir (נלהב)" },
-  { value: "Zephyr", label: "Zephyr (בהיר)" },
+  // Female voices
+  { value: "Aoede", label: "Aoede (נשי, קליל)" },
+  { value: "Kore", label: "Kore (נשי, יציב)" },
+  { value: "Leda", label: "Leda (נשי, צעיר)" },
+  { value: "Zephyr", label: "Zephyr (נשי, בהיר)" },
+  { value: "Achernar", label: "Achernar (נשי, רך)" },
+  { value: "Sulafat", label: "Sulafat (נשי, חם)" },
+  { value: "Vindemiatrix", label: "Vindemiatrix (נשי, עדין)" },
+  { value: "Despina", label: "Despina (נשי, חלק)" },
+  { value: "Achird", label: "Achird (נשי, ידידותי)" },
+  { value: "Sadachbia", label: "Sadachbia (נשי, חיוני)" },
+  // Male voices
+  { value: "Puck", label: "Puck (גברי, עליז)" },
+  { value: "Charon", label: "Charon (גברי, מידעי)" },
+  { value: "Fenrir", label: "Fenrir (גברי, נלהב)" },
+  { value: "Orus", label: "Orus (גברי, יציב)" },
+  { value: "Iapetus", label: "Iapetus (גברי, צלול)" },
+  { value: "Umbriel", label: "Umbriel (גברי, קליל)" },
+  { value: "Algieba", label: "Algieba (גברי, חלק)" },
+  { value: "Gacrux", label: "Gacrux (גברי, בוגר)" },
+  { value: "Schedar", label: "Schedar (גברי, אחיד)" },
+  { value: "Algenib", label: "Algenib (גברי, חספוס)" },
 ];
 
 export interface StoryData {

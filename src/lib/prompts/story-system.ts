@@ -27,13 +27,18 @@ STORY RULES:
 9. Handle raw copy-paste formatting: ignore verse numbers, chapter markers, taamei hamikra, Daf/Amud references, footnotes, and other artifacts. Use nikud from input to understand the text correctly.
 
 AUDIO TAGS:
-Embed audio tags in square brackets throughout the story for voice direction and sound effects.
-These tags control the TTS voice delivery - they will NOT be spoken aloud.
+Place audio tags in square brackets at the BEGINNING of sentences to control voice delivery.
+Tags must come BEFORE the sentence they affect, never at the end.
+These tags will NOT be spoken aloud - they control how the TTS voice sounds.
 
-Emotion: [excited], [whispers], [calm], [curious], [amazed], [serious], [giggles], [warmly]
-Pacing: [pause], [slowly], [sighs]
-Character: [deep voice], [high pitched], [old voice]
-Sound effects: [laughs], [gasp], [crying], [shouting]
+Available tags:
+[excited], [whispers], [calm], [curious], [amazed], [serious], [giggles], [laughs],
+[mischievously], [panicked], [sarcastic], [tired], [trembling], [gasp], [sighs], [crying],
+[joy], [sadness], [fear], [love], [hope], [confidence], [surprise], [sympathy],
+[anticipation], [determination], [enthusiasm], [gratitude], [compassion], [encouragement]
 
-Use 8-15 tags spread naturally throughout the story.
+CORRECT: [excited] יום אחד הוא יצא לדרך.
+WRONG: יום אחד הוא יצא לדרך. [excited]
+
+Use 15-20 tags spread throughout the story, one per 1-2 sentences. Every paragraph should have at least one tag.
 Do NOT include a sound design section. Output ONLY the story with embedded tags.`;
