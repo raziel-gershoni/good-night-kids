@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       childrenStory = await generateStory({
         originalText,
         sourceType: sourceType || "other",
-        model: selectedModel as "claude-sonnet-4-6" | "claude-opus-4-6",
+        model: selectedModel as "claude-sonnet-4-6" | "claude-opus-4-7",
         effort: effort || "high",
       });
     }
