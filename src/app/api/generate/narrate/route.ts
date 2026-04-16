@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { generateSpeech } from "@/lib/tts/elevenlabs";
+import { generateSpeechGemini } from "@/lib/tts/gemini-tts";
 
 export const maxDuration = 300;
 
 export async function POST(request: Request) {
   try {
-    const { ttsScript, voiceId } = await request.json();
+    const { ttsScript, voiceId, ttsEngine } = await request.json();
 
     if (!ttsScript?.trim()) {
       return NextResponse.json(
@@ -14,25 +15,38 @@ export async function POST(request: Request) {
       );
     }
 
-    // Strip sound design section and any [tags] before sending to TTS
+    // Strip sound design section and any [tags] only for clean text
     const soundMarker = "### עיצוב סאונד";
     const soundIdx = ttsScript.indexOf(soundMarker);
-    let textForTts = soundIdx !== -1 ? ttsScript.slice(0, soundIdx).trim() : ttsScript;
-    textForTts = textForTts.replace(/\[.*?\]/g, "").replace(/\s+/g, " ").trim();
+    const textForTts = soundIdx !== -1 ? ttsScript.slice(0, soundIdx).trim() : ttsScript;
 
-    console.log("=== NARRATE: TTS INPUT ===");
-    console.log("Length:", textForTts.length);
-    console.log("Full text:", textForTts);
+    console.log("TTS engine:", ttsEngine || "elevenlabs");
+    console.log("TTS text length:", textForTts.length);
+
+    if (ttsEngine === "gemini") {
+      // Gemini TTS - keep audio tags, they work with this engine
+      const audioBuffer = await generateSpeechGemini({
+        text: textForTts,
+        voiceName: voiceId || "Aoede",
+      });
+
+      return NextResponse.json({
+        audioBase64: audioBuffer.toString("base64"),
+        alignment: null, // Gemini TTS doesn't return alignment
+        mimeType: "audio/wav",
+      });
+    }
+
+    // ElevenLabs - strip [tags] since they don't work with custom voices
+    const cleanText = textForTts.replace(/\[.*?\]/g, "").replace(/\s+/g, " ").trim();
 
     const { audioBuffer, alignment } = await generateSpeech({
-      text: textForTts,
+      text: cleanText,
       voiceId: voiceId || "owHnXhz2H7U5Cv31srDU",
     });
 
-    const audioBase64 = audioBuffer.toString("base64");
-
     return NextResponse.json({
-      audioBase64,
+      audioBase64: audioBuffer.toString("base64"),
       alignment,
       mimeType: "audio/mpeg",
     });

@@ -7,7 +7,7 @@ import { StepSection } from "./step-section";
 import { AudioPlayer } from "./audio-player";
 import { StoryActions } from "./story-actions";
 import { SavedStoriesList } from "./saved-stories-list";
-import type { StoryModel, EffortLevel, SourceType, SavedStory } from "@/lib/types";
+import type { StoryModel, EffortLevel, TtsEngine, SourceType, SavedStory } from "@/lib/types";
 import { audioBufferToWav } from "@/lib/audio-utils";
 
 interface EffectBlob {
@@ -33,7 +33,8 @@ export function StoryWizard() {
   // Settings
   const [model, setModel] = useState<StoryModel>("gemini-3.1-flash-lite-preview");
   const [effort, setEffort] = useState<EffortLevel>("high");
-  const [voiceId, setVoiceId] = useState("owHnXhz2H7U5Cv31srDU");
+  const [ttsEngine, setTtsEngine] = useState<TtsEngine>("gemini");
+  const [voiceId, setVoiceId] = useState("Aoede");
   const [sourceType, setSourceType] = useState<SourceType>("tanakh");
 
   // Content
@@ -149,7 +150,7 @@ export function StoryWizard() {
       const res = await fetch("/api/generate/narrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ttsScript: childrenStory, voiceId }),
+        body: JSON.stringify({ ttsScript: childrenStory, voiceId, ttsEngine }),
       });
       if (!res.ok) throw new Error("Failed to generate audio");
       const data = await res.json();
@@ -185,7 +186,7 @@ export function StoryWizard() {
     } finally {
       setIsGeneratingAudio(false);
     }
-  }, [childrenStory, voiceId]);
+  }, [childrenStory, voiceId, ttsEngine]);
 
   // Generate ambient only
   const generateAmbient = useCallback(async () => {
@@ -302,21 +303,7 @@ export function StoryWizard() {
         }
       }
 
-      // Effects at timestamps
-      for (let i = 0; i < effectBlobs.length; i++) {
-        const e = effectBlobs[i];
-        try {
-          const effResp = await fetch(e.audioUrl);
-          const effBuf = await offlineCtx.decodeAudioData(await effResp.arrayBuffer());
-          const effSrc = offlineCtx.createBufferSource();
-          effSrc.buffer = effBuf;
-          const effGain = offlineCtx.createGain();
-          effGain.gain.value = 0.7;
-          effSrc.connect(effGain).connect(offlineCtx.destination);
-          const time = e.timestampSeconds ?? ((i + 1) / (effectBlobs.length + 1)) * narDuration;
-          effSrc.start(Math.min(time, narDuration));
-        } catch { /* skip */ }
-      }
+      // Effects deprecated - audio tags handle effects inline in TTS
 
       const rendered = await offlineCtx.startRendering();
       const wavData = audioBufferToWav(rendered);
@@ -329,7 +316,7 @@ export function StoryWizard() {
     } finally {
       setIsMixing(false);
     }
-  }, [audioBase64, ambientBlob, effectBlobs]);
+  }, [audioBase64, ambientBlob]);
 
   const handleSaved = (id: string, slug: string) => {
     setCurrentStoryId(id);
@@ -369,9 +356,11 @@ export function StoryWizard() {
       <SettingsBar
         model={model}
         effort={effort}
+        ttsEngine={ttsEngine}
         voiceId={voiceId}
         onModelChange={setModel}
         onEffortChange={setEffort}
+        onTtsEngineChange={setTtsEngine}
         onVoiceChange={setVoiceId}
       />
 
@@ -416,7 +405,7 @@ export function StoryWizard() {
       </StepSection>
 
       {/* Generate sound design button */}
-      {childrenStory && !ambientPrompt && !effectsText && (
+      {childrenStory && !ambientPrompt && (
         <button
           onClick={generateSoundDesign}
           disabled={isGeneratingSoundDesign}
@@ -433,8 +422,8 @@ export function StoryWizard() {
       )}
 
       {/* Sound design inputs */}
-      {(ambientPrompt || effectsText) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {ambientPrompt && (
+        <div className="space-y-4">
           {/* Ambient */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -468,50 +457,7 @@ export function StoryWizard() {
             )}
           </div>
 
-          {/* Effects */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-gold-400">אפקטים</h3>
-              <button
-                onClick={generateEffects}
-                disabled={isGeneratingEffects || !effectsText.trim() || !audioBase64}
-                className="px-3 py-1 bg-gold-500 hover:bg-gold-400 disabled:bg-night-600 disabled:text-gray-500 text-night-900 text-sm font-bold rounded-lg transition-colors flex items-center gap-1"
-              >
-                {isGeneratingEffects && (
-                  <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                )}
-                {isGeneratingEffects ? "..." : "ייצר"}
-              </button>
-            </div>
-            <textarea
-              value={effectsText}
-              onChange={(e) => setEffectsText(e.target.value)}
-              rows={3}
-              className="w-full bg-night-800 border border-night-600/50 rounded-xl p-3 text-white text-sm resize-y focus:outline-none focus:border-gold-400"
-              dir="ltr"
-            />
-            {effectBlobs.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {effectBlobs.map((e, i) => (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      const a = new Audio(e.audioUrl);
-                      a.volume = 0.7;
-                      a.play();
-                    }}
-                    className="px-2 py-0.5 bg-night-700/50 hover:bg-night-600 rounded text-gray-400 hover:text-gold-400 transition-colors cursor-pointer text-xs"
-                    title={e.prompt}
-                  >
-                    ▶ {e.label} {e.timestampSeconds !== null ? `(${formatTime(e.timestampSeconds)})` : ""}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Effects UI deprecated - audio tags handle effects inline */}
         </div>
       )}
 
@@ -526,7 +472,7 @@ export function StoryWizard() {
         onChange={() => {}}
       >
         {/* Mix button */}
-        {audioUrl && !isMixed && (ambientBlob || effectBlobs.length > 0) && (
+        {audioUrl && !isMixed && ambientBlob && (
           <button
             onClick={mixAll}
             disabled={isMixing}
@@ -555,6 +501,7 @@ export function StoryWizard() {
           ttsScript: ttsScript || undefined,
           model,
           effort,
+          ttsEngine,
           voiceId,
         }}
         audioBase64={audioBase64}

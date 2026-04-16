@@ -3,29 +3,16 @@ import { getClaudeClient } from "@/lib/claude/client";
 
 export const maxDuration = 300;
 
-const SOUND_DESIGN_PROMPT = `You are a sound designer for a children's bedtime story audio production. Given a Hebrew story, generate:
+const PROMPT = `Given a Hebrew children's bedtime story, generate a SHORT ambient background sound description in English (max 8 words) for a sound effects model.
 
-1. An ambient background description (SHORT, max 8 words in English, for a sound effects model)
-2. A list of 5-8 sound effects placed at specific moments in the story
+Examples:
+- "soft piano lullaby with crickets at night"
+- "gentle oud melody with desert wind"
+- "calm harp music with rain sounds"
+- "warm acoustic guitar with forest birds"
 
-CRITICAL RULES:
-- The ambient description must be in English, short and simple. E.g.: "soft piano lullaby with crickets at night"
-- Each effect has a Hebrew quote (2-4 words copied EXACTLY from the story) and an English sound description
-- The Hebrew quote MUST be copied CHARACTER-FOR-CHARACTER from the story text. Do not paraphrase. Do not use biblical Hebrew. Copy-paste consecutive words exactly as they appear.
-- Only physical sounds recordable with a microphone: "sheep bleating", "door creaking", "footsteps on gravel", "bird singing", "fire crackling", "river flowing"
-- NO abstract sounds: not "sound of realization", not "magical feeling"
-- Spread effects evenly throughout the story from beginning to end
-
-Output format (follow exactly):
-
-אווירה: [short English ambient description]
-
-אפקטים:
-* [exact quote from story] - [English sound description]
-* [exact quote from story] - [English sound description]
-* [exact quote from story] - [English sound description]
-* [exact quote from story] - [English sound description]
-* [exact quote from story] - [English sound description]`;
+Output format (exactly):
+אווירה: [your description]`;
 
 export async function POST(request: Request) {
   try {
@@ -42,39 +29,25 @@ export async function POST(request: Request) {
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 2000,
-      system: SOUND_DESIGN_PROMPT,
+      max_tokens: 200,
+      system: PROMPT,
       messages: [
         {
           role: "user",
-          content: `Here is the story. Generate sound design for it:\n\n${childrenStory}`,
+          content: `Generate ambient for this story:\n\n${childrenStory.slice(0, 500)}`,
         },
       ],
     });
 
-    let soundDesign = "";
+    let result = "";
     for (const block of response.content) {
-      if (block.type === "text") {
-        soundDesign += block.text;
-      }
+      if (block.type === "text") result += block.text;
     }
 
-    // Parse into ambient + effects
-    const ambientMatch = soundDesign.match(/אווירה:\s*(.+)/);
-    const ambient = ambientMatch?.[1]?.trim() || "";
+    const ambientMatch = result.match(/אווירה:\s*(.+)/);
+    const ambient = ambientMatch?.[1]?.trim() || "soft piano lullaby with gentle night sounds";
 
-    const effectLines: string[] = [];
-    const regex = /\*\s*(.+)/g;
-    let match;
-    while ((match = regex.exec(soundDesign)) !== null) {
-      effectLines.push(match[1].trim());
-    }
-
-    return NextResponse.json({
-      ambient,
-      effects: effectLines.join("\n"),
-      raw: soundDesign,
-    });
+    return NextResponse.json({ ambient, effects: "" });
   } catch (error) {
     console.error("Sound design generation error:", error);
     return NextResponse.json(

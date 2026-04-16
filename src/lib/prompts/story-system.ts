@@ -26,6 +26,14 @@ STORY RULES:
 8. No scary, violent, or overly complex content
 9. Handle raw copy-paste formatting: ignore verse numbers, chapter markers, taamei hamikra, Daf/Amud references, footnotes, and other artifacts. Use nikud from input to understand the text correctly.
 
-Do NOT include any tags in square brackets like [soft], [pause], etc.
-Do NOT include a sound design section.
-Output ONLY the plain Hebrew story text.`;
+AUDIO TAGS:
+Embed audio tags in square brackets throughout the story for voice direction and sound effects.
+These tags control the TTS voice delivery - they will NOT be spoken aloud.
+
+Emotion: [excited], [whispers], [calm], [curious], [amazed], [serious], [giggles], [warmly]
+Pacing: [pause], [slowly], [sighs]
+Character: [deep voice], [high pitched], [old voice]
+Sound effects: [laughs], [gasp], [crying], [shouting]
+
+Use 8-15 tags spread naturally throughout the story.
+Do NOT include a sound design section. Output ONLY the story with embedded tags.`;

@@ -6,6 +6,8 @@ export type StoryModel = ClaudeModel | GeminiModel;
 
 export type EffortLevel = "low" | "medium" | "high" | "max";
 
+export type TtsEngine = "elevenlabs" | "gemini";
+
 export const STORY_MODELS: { value: StoryModel; label: string }[] = [
   { value: "claude-sonnet-4-6", label: "Claude Sonnet 4.6" },
   { value: "claude-opus-4-6", label: "Claude Opus 4.6" },
@@ -28,11 +30,25 @@ export const SOURCE_TYPES: { value: SourceType; label: string }[] = [
   { value: "other", label: "אחר" },
 ];
 
-// ElevenLabs Hebrew-compatible voices
-// These are default ElevenLabs voices - user can find voice IDs from their library
-export const TTS_VOICES: { value: string; label: string }[] = [
+export const TTS_ENGINES: { value: TtsEngine; label: string }[] = [
+  { value: "gemini", label: "Gemini 3.1 TTS" },
+  { value: "elevenlabs", label: "ElevenLabs" },
+];
+
+export const ELEVENLABS_VOICES: { value: string; label: string }[] = [
   { value: "owHnXhz2H7U5Cv31srDU", label: "קול 1" },
   { value: "JiKFunrRggP9Jl3AcoUw", label: "קול 2" },
+];
+
+export const GEMINI_TTS_VOICES: { value: string; label: string }[] = [
+  { value: "Aoede", label: "Aoede (חם)" },
+  { value: "Kore", label: "Kore (יציב)" },
+  { value: "Leda", label: "Leda (צעיר)" },
+  { value: "Puck", label: "Puck (עליז)" },
+  { value: "Charon", label: "Charon (מידעי)" },
+  { value: "Enceladus", label: "Enceladus (רך)" },
+  { value: "Fenrir", label: "Fenrir (נלהב)" },
+  { value: "Zephyr", label: "Zephyr (בהיר)" },
 ];
 
 export interface StoryData {
@@ -46,6 +62,7 @@ export interface StoryData {
   audioUrl?: string;
   model: StoryModel;
   effort: EffortLevel;
+  ttsEngine: TtsEngine;
   voiceId: string;
 }
 
