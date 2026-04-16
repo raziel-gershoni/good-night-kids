@@ -59,20 +59,42 @@ export async function generateSpeechGemini(params: {
   text: string;
   voiceName: string;
 }): Promise<Buffer> {
-  // Split into paragraphs to avoid quality degradation in long audio
-  const paragraphs = params.text
+  // Split into chunks to avoid quality degradation in long audio
+  // Merge short paragraphs together until each chunk is 200-600 chars
+  const rawParagraphs = params.text
     .split(/\n\n+/)
     .map((p) => p.trim())
     .filter((p) => p.length > 0);
 
-  console.log(`Gemini TTS: ${paragraphs.length} paragraphs`);
+  const chunks: string[] = [];
+  let current = "";
+  for (const p of rawParagraphs) {
+    if (current.length > 0 && current.length + p.length > 500) {
+      chunks.push(current);
+      current = p;
+    } else {
+      current = current ? current + "\n\n" + p : p;
+    }
+  }
+  if (current) chunks.push(current);
 
-  // Render each paragraph sequentially
+  console.log(`Gemini TTS: ${rawParagraphs.length} paragraphs → ${chunks.length} chunks`);
+
+  // Render each chunk sequentially with retry
   const pcmChunks: Buffer[] = [];
-  for (let i = 0; i < paragraphs.length; i++) {
-    console.log(`  Paragraph ${i + 1}/${paragraphs.length} (${paragraphs[i].length} chars)`);
-    const pcm = await ttsOneChunk(paragraphs[i], params.voiceName);
-    pcmChunks.push(pcm);
+  for (let i = 0; i < chunks.length; i++) {
+    console.log(`  Chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
+    let pcm: Buffer | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        pcm = await ttsOneChunk(chunks[i], params.voiceName);
+        break;
+      } catch (err) {
+        console.error(`  Chunk ${i + 1} attempt ${attempt + 1} failed:`, err);
+        if (attempt === 2) throw err;
+      }
+    }
+    if (pcm) pcmChunks.push(pcm);
   }
 
   // Concatenate all PCM chunks and wrap in single WAV header
