@@ -25,22 +25,20 @@ function createWavHeader(pcmDataLength: number): Buffer {
   return header;
 }
 
-export async function generateSpeechGemini(params: {
-  text: string;
-  voiceName: string;
-}): Promise<Buffer> {
+async function ttsOneChunk(
+  text: string,
+  voiceName: string
+): Promise<Buffer> {
   const ai = getGeminiClient();
 
   const response = await ai.models.generateContent({
     model: "gemini-3.1-flash-tts-preview",
-    contents: [{ parts: [{ text: params.text }] }],
+    contents: [{ parts: [{ text }] }],
     config: {
       responseModalities: ["AUDIO"],
       speechConfig: {
         voiceConfig: {
-          prebuiltVoiceConfig: {
-            voiceName: params.voiceName,
-          },
+          prebuiltVoiceConfig: { voiceName },
         },
       },
     },
@@ -53,7 +51,32 @@ export async function generateSpeechGemini(params: {
     throw new Error("No audio data from Gemini TTS");
   }
 
-  const pcmBuffer = Buffer.from(audioData, "base64");
-  const wavHeader = createWavHeader(pcmBuffer.length);
-  return Buffer.concat([wavHeader, pcmBuffer]);
+  // Return raw PCM (no WAV header yet)
+  return Buffer.from(audioData, "base64");
+}
+
+export async function generateSpeechGemini(params: {
+  text: string;
+  voiceName: string;
+}): Promise<Buffer> {
+  // Split into paragraphs to avoid quality degradation in long audio
+  const paragraphs = params.text
+    .split(/\n\n+/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+
+  console.log(`Gemini TTS: ${paragraphs.length} paragraphs`);
+
+  // Render each paragraph sequentially
+  const pcmChunks: Buffer[] = [];
+  for (let i = 0; i < paragraphs.length; i++) {
+    console.log(`  Paragraph ${i + 1}/${paragraphs.length} (${paragraphs[i].length} chars)`);
+    const pcm = await ttsOneChunk(paragraphs[i], params.voiceName);
+    pcmChunks.push(pcm);
+  }
+
+  // Concatenate all PCM chunks and wrap in single WAV header
+  const combinedPcm = Buffer.concat(pcmChunks);
+  const wavHeader = createWavHeader(combinedPcm.length);
+  return Buffer.concat([wavHeader, combinedPcm]);
 }
