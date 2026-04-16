@@ -83,24 +83,20 @@ export async function generateSpeechGemini(params: {
   // Render each chunk sequentially with retry
   const pcmChunks: Buffer[] = [];
   for (let i = 0; i < chunks.length; i++) {
-    console.log(`  Chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
+    // Add pause at end of each chunk except the last
+    const chunkText = i < chunks.length - 1 ? chunks[i] + " [pause]" : chunks[i];
+    console.log(`  Chunk ${i + 1}/${chunks.length} (${chunkText.length} chars)`);
     let pcm: Buffer | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        pcm = await ttsOneChunk(chunks[i], params.voiceName);
+        pcm = await ttsOneChunk(chunkText, params.voiceName);
         break;
       } catch (err) {
         console.error(`  Chunk ${i + 1} attempt ${attempt + 1} failed:`, err);
         if (attempt === 2) throw err;
       }
     }
-    if (pcm) {
-      pcmChunks.push(pcm);
-      // Add 0.5s silence between chunks (24000 samples/s × 2 bytes × 0.5s = 24000 bytes)
-      if (i < chunks.length - 1) {
-        pcmChunks.push(Buffer.alloc(24000));
-      }
-    }
+    if (pcm) pcmChunks.push(pcm);
   }
 
   // Concatenate all PCM chunks and wrap in single WAV header
