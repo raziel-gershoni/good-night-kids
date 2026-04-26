@@ -1,21 +1,199 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
-  --color-night-900: #0f0a2a;
-  --color-night-800: #1a1145;
-  --color-night-700: #251a5e;
-  --color-night-600: #332470;
-  --color-gold-400: #f6c547;
-  --color-gold-500: #e5a81e;
-  --color-gold-600: #c48d0c;
-  --font-heebo: var(--font-heebo);
+  --color-canvas: var(--canvas);
+  --color-canvas-2: var(--canvas-2);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-brass: var(--brass);
+  --color-brass-soft: var(--brass-soft);
+  --color-leaf: var(--leaf);
+  --color-amber: var(--amber);
+  --color-clay: var(--clay);
+  --font-display: var(--font-frank-ruhl), "Frank Ruhl Libre", "Iowan Old Style",
+    Georgia, "Times New Roman", serif;
+  --font-body: var(--font-assistant), "Assistant", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", system-ui, sans-serif;
+}
+
+:root {
+  /* Light: morning parchment */
+  --canvas: #f5f0e4;
+  --canvas-2: #ebe4d2;
+  --paper: #fdfaf3;
+  --paper-2: #f7f1e1;
+  --ink: #1a140d;
+  --ink-muted: #5b5247;
+  --ink-subtle: #8f8676;
+  --rule: #e0d7c1;
+  --rule-strong: #c8bea4;
+  --brass: #9b6f24;
+  --brass-soft: #b88a3f;
+  --leaf: #4a6b3a;
+  --amber: #b3791f;
+  --clay: #8a3a2f;
+
+  --shadow-card: 0 1px 2px rgba(26, 20, 13, 0.04), 0 0 0 1px rgba(26, 20, 13, 0.02);
+}
+
+.dark {
+  /* Dark: midnight ink */
+  --canvas: #0c0e13;
+  --canvas-2: #14171f;
+  --paper: #1a1d27;
+  --paper-2: #232734;
+  --ink: #ece5d4;
+  --ink-muted: #9c9587;
+  --ink-subtle: #62594c;
+  --rule: #2a2e3b;
+  --rule-strong: #3a3f4f;
+  --brass: #d4a657;
+  --brass-soft: #b88a3f;
+  --leaf: #8aa874;
+  --amber: #d4a043;
+  --clay: #c47a6f;
+
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+html {
+  color-scheme: light;
+  background-color: var(--canvas);
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 body {
-  background: linear-gradient(180deg, #0f0a2a 0%, #1a1145 50%, #0f0a2a 100%);
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-feature-settings: "kern", "liga", "ss01";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
 }
 
-textarea {
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background-image:
+    radial-gradient(
+      ellipse 60% 40% at 25% 15%,
+      color-mix(in oklab, var(--brass) 6%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 50% 35% at 75% 85%,
+      color-mix(in oklab, var(--brass) 4%, transparent) 0%,
+      transparent 60%
+    );
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-display {
+  font-family: var(--font-display);
+  font-feature-settings: "kern", "liga", "ss01", "ss02";
+  letter-spacing: -0.005em;
+}
+
+textarea,
+input[type="text"],
+input[type="search"] {
   direction: rtl;
+}
+
+::selection {
+  background-color: color-mix(in oklab, var(--brass) 28%, transparent);
+  color: var(--ink);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-strong) transparent;
+}
+
+/* Step number medallion */
+.step-num {
+  font-family: var(--font-display);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--brass);
+  border-radius: 9999px;
+  color: var(--brass);
+  font-size: 1rem;
+  font-weight: 500;
+  flex-shrink: 0;
+  letter-spacing: 0;
+  background-color: color-mix(in oklab, var(--brass) 5%, transparent);
+}
+
+/* Hairline divider with center diamond */
+.ornament-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--rule-strong);
+}
+.ornament-divider::before,
+.ornament-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: var(--rule);
+}
+.ornament-divider svg {
+  flex-shrink: 0;
+  color: var(--brass-soft);
+  opacity: 0.7;
+}
+
+/* Subtle entrance for content blocks */
+@keyframes paper-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.paper-fade {
+  animation: paper-fade 320ms ease-out both;
+}
+
+/* Drop cap for story body */
+.story-body::first-letter {
+  font-family: var(--font-display);
+  font-size: 3.2em;
+  line-height: 0.9;
+  float: right;
+  margin-left: 0.4rem;
+  margin-top: 0.1rem;
+  color: var(--brass);
+  font-weight: 500;
+}
+
+/* Range slider */
+input[type="range"] {
+  accent-color: var(--brass);
 }

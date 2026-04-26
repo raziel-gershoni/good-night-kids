@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { StoryData } from "@/lib/types";
+import { Button } from "./ui";
 
 interface StoryActionsProps {
   storyData: StoryData;
@@ -24,18 +25,13 @@ export function StoryActions({
     setIsSaving(true);
     try {
       const isUpdate = !!storyData.id;
-      const url = isUpdate
-        ? `/api/stories/${storyData.id}`
-        : "/api/stories";
+      const url = isUpdate ? `/api/stories/${storyData.id}` : "/api/stories";
       const method = isUpdate ? "PUT" : "POST";
 
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...storyData,
-          audioBase64,
-        }),
+        body: JSON.stringify({ ...storyData, audioBase64 }),
       });
 
       if (!res.ok) throw new Error("Failed to save");
@@ -57,70 +53,50 @@ export function StoryActions({
   }
 
   return (
-    <div className="flex gap-3">
-      <button
+    <div className="flex gap-3 flex-wrap">
+      <Button
+        variant="secondary"
         onClick={handleSave}
-        disabled={!canSave || isSaving}
-        className="px-5 py-2 bg-night-700 hover:bg-night-600 disabled:bg-night-800 disabled:text-gray-600 text-white font-bold rounded-xl transition-colors flex items-center gap-2 border border-night-600/50"
-      >
-        {isSaving ? (
-          <svg
-            className="animate-spin h-4 w-4"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
-        ) : (
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
-            />
-          </svg>
-        )}
-        {isSaving ? "שומר..." : "שמור"}
-      </button>
-
-      <button
-        onClick={handleShare}
-        disabled={!canShare}
-        className="px-5 py-2 bg-night-700 hover:bg-night-600 disabled:bg-night-800 disabled:text-gray-600 text-white font-bold rounded-xl transition-colors flex items-center gap-2 border border-night-600/50"
+        loading={isSaving}
+        disabled={!canSave}
       >
         <svg
           className="w-4 h-4"
           fill="none"
           stroke="currentColor"
+          strokeWidth="1.6"
           viewBox="0 0 24 24"
+          aria-hidden
         >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+            d="M5 5h11l3 3v11a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z M8 19v-6h8v6 M8 5v4h7"
           />
         </svg>
-        {copied ? "הקישור הועתק!" : "שתף"}
-      </button>
+        {isSaving ? "שומר…" : "שמור"}
+      </Button>
+
+      <Button variant="ghost" onClick={handleShare} disabled={!canShare}>
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          viewBox="0 0 24 24"
+          aria-hidden
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M8.7 13.3l6.6 3.4M15.3 7.3l-6.6 3.4"
+          />
+          <circle cx="6" cy="12" r="2.5" />
+          <circle cx="17" cy="6" r="2.5" />
+          <circle cx="17" cy="18" r="2.5" />
+        </svg>
+        {copied ? "הקישור הועתק" : "שתף"}
+      </Button>
     </div>
   );
 }

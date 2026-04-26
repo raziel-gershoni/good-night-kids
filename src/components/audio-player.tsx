@@ -1,22 +1,22 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { Spinner } from "./ui";
 
 interface AudioPlayerProps {
   audioUrl: string | null;
   isLoading: boolean;
 }
 
-export function AudioPlayer({
-  audioUrl,
-  isLoading,
-}: AudioPlayerProps) {
+export function AudioPlayer({ audioUrl, isLoading }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
   useEffect(() => {
+    // Reset transport when audio source changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
@@ -30,11 +30,8 @@ export function AudioPlayer({
 
   function togglePlay() {
     if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
-    }
+    if (isPlaying) audioRef.current.pause();
+    else audioRef.current.play();
     setIsPlaying(!isPlaying);
   }
 
@@ -55,12 +52,9 @@ export function AudioPlayer({
 
   if (isLoading) {
     return (
-      <div className="bg-night-800 border border-night-600/50 rounded-xl p-4 flex items-center justify-center gap-3">
-        <svg className="animate-spin h-5 w-5 text-gold-400" viewBox="0 0 24 24" fill="none">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-        <span className="text-gray-300">מייצר הקראה...</span>
+      <div className="bg-paper border border-rule rounded-lg p-4 flex items-center justify-center gap-3 text-ink-muted">
+        <Spinner size={18} />
+        <span className="text-sm">מייצר הקראה…</span>
       </div>
     );
   }
@@ -68,7 +62,7 @@ export function AudioPlayer({
   if (!audioUrl) return null;
 
   return (
-    <div className="bg-night-800 border border-night-600/50 rounded-xl p-4 space-y-3">
+    <div className="bg-paper border border-rule rounded-lg p-4 paper-fade">
       <audio
         ref={audioRef}
         src={audioUrl}
@@ -80,16 +74,17 @@ export function AudioPlayer({
       <div className="flex items-center gap-4">
         <button
           onClick={togglePlay}
-          className="w-10 h-10 rounded-full bg-gold-500 hover:bg-gold-400 text-night-900 flex items-center justify-center transition-colors"
+          aria-label={isPlaying ? "השהה" : "נגן"}
+          className="w-10 h-10 rounded-full bg-brass hover:bg-brass-soft text-canvas flex items-center justify-center transition-colors shrink-0"
         >
           {isPlaying ? (
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
               <rect x="6" y="4" width="4" height="16" />
               <rect x="14" y="4" width="4" height="16" />
             </svg>
           ) : (
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <polygon points="5,3 19,12 5,21" />
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <polygon points="6,4 20,12 6,20" />
             </svg>
           )}
         </button>
@@ -100,20 +95,35 @@ export function AudioPlayer({
           max={duration || 0}
           value={currentTime}
           onChange={handleSeek}
-          className="flex-1 accent-gold-400 h-1"
+          className="flex-1 h-1"
+          aria-label="התקדמות"
         />
 
-        <span className="text-sm text-gray-400 font-mono min-w-[80px] text-center" dir="ltr">
+        <span
+          className="text-sm text-ink-muted font-mono tabular-nums min-w-[5rem] text-center"
+          dir="ltr"
+        >
           {formatTime(currentTime)} / {formatTime(duration)}
         </span>
 
         <button
           onClick={handleDownload}
-          className="text-gray-400 hover:text-gold-400 transition-colors"
+          aria-label="הורד"
           title="הורד"
+          className="text-ink-muted hover:text-brass transition-colors p-1.5 rounded-md hover:bg-paper-2"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"
+            />
           </svg>
         </button>
       </div>

@@ -7,6 +7,14 @@ interface SavedStoriesListProps {
   onLoad: (story: SavedStory) => void;
 }
 
+const SOURCE_LABELS: Record<string, string> = {
+  tanakh: 'תנ"ך',
+  gmara: "גמרא",
+  zohar: "זוהר",
+  midrash: "מדרש",
+  other: "אחר",
+};
+
 export function SavedStoriesList({ onLoad }: SavedStoriesListProps) {
   const [stories, setStories] = useState<SavedStory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,7 +27,7 @@ export function SavedStoriesList({ onLoad }: SavedStoriesListProps) {
         setStories(data.stories);
       }
     } catch {
-      // Silently fail for POC
+      /* silent for POC */
     } finally {
       setIsLoading(false);
     }
@@ -34,61 +42,73 @@ export function SavedStoriesList({ onLoad }: SavedStoriesListProps) {
       await fetch(`/api/stories/${id}`, { method: "DELETE" });
       setStories((prev) => prev.filter((s) => s.id !== id));
     } catch {
-      // Silently fail for POC
+      /* silent */
     }
   }
 
-  const sourceLabels: Record<string, string> = {
-    tanakh: 'תנ"ך',
-    gmara: "גמרא",
-    zohar: "זוהר",
-    midrash: "מדרש",
-    other: "אחר",
-  };
-
-  if (isLoading) return null;
-  if (stories.length === 0) return null;
+  if (isLoading || stories.length === 0) return null;
 
   return (
-    <div className="space-y-3">
-      <h2 className="text-lg font-bold text-gold-400">סיפורים שמורים</h2>
-      <div className="space-y-2">
-        {stories.map((story) => (
-          <div
+    <section className="space-y-3">
+      <h2 className="font-display text-xl font-medium text-ink">סיפורים שמורים</h2>
+      <div className="rounded-lg border border-rule overflow-hidden bg-paper">
+        {stories.map((story, idx) => (
+          <article
             key={story.id}
-            className="flex items-center justify-between bg-night-800/50 border border-night-600/30 rounded-xl p-3"
+            className={`flex items-center justify-between gap-3 px-4 py-3 ${
+              idx > 0 ? "border-t border-rule" : ""
+            } hover:bg-paper-2 transition-colors`}
           >
-            <div className="flex items-center gap-3">
-              <span className="text-xs px-2 py-0.5 bg-night-700 rounded-md text-gray-400">
-                {sourceLabels[story.sourceType] || story.sourceType}
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-ink-subtle px-2 py-0.5 border border-rule rounded shrink-0">
+                {SOURCE_LABELS[story.sourceType] || story.sourceType}
               </span>
-              <span className="text-white text-sm">
+              <span className="font-display text-base text-ink truncate" title={story.title || undefined}>
                 {story.title || "סיפור ללא שם"}
               </span>
               {story.hasAudio && (
-                <span className="text-gold-400 text-xs">🔊</span>
+                <SpeakerIcon className="w-3.5 h-3.5 text-brass shrink-0" />
               )}
-              <span className="text-gray-500 text-xs">
+              <span className="text-xs text-ink-subtle tabular-nums shrink-0 ms-auto" dir="ltr">
                 {new Date(story.createdAt).toLocaleDateString("he-IL")}
               </span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1 shrink-0">
               <button
                 onClick={() => onLoad(story)}
-                className="text-sm px-3 py-1 bg-night-700 hover:bg-night-600 text-white rounded-lg transition-colors"
+                className="text-xs px-2.5 py-1 text-ink-muted hover:text-brass hover:bg-paper-2 rounded transition-colors"
               >
                 טען
               </button>
               <button
                 onClick={() => handleDelete(story.id)}
-                className="text-sm px-3 py-1 bg-night-700 hover:bg-red-900/50 text-gray-400 hover:text-red-300 rounded-lg transition-colors"
+                className="text-xs px-2.5 py-1 text-ink-subtle hover:text-clay hover:bg-paper-2 rounded transition-colors"
               >
                 מחק
               </button>
             </div>
-          </div>
+          </article>
         ))}
       </div>
-    </div>
+    </section>
+  );
+}
+
+function SpeakerIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      viewBox="0 0 24 24"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M11 5L6 9H3v6h3l5 4V5zM15 9a3 3 0 010 6M18 6a7 7 0 010 12"
+      />
+    </svg>
   );
 }

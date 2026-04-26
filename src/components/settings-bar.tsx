@@ -22,6 +22,9 @@ interface SettingsBarProps {
   onVoiceChange: (voiceId: string) => void;
 }
 
+const SELECT_CLASS =
+  "w-full bg-paper-2 border border-rule rounded-md px-2.5 py-1.5 text-ink text-sm focus:outline-none focus:border-brass transition-colors";
+
 export function SettingsBar({
   model,
   effort,
@@ -35,72 +38,87 @@ export function SettingsBar({
   const voices = ttsEngine === "gemini" ? GEMINI_TTS_VOICES : ELEVENLABS_VOICES;
 
   return (
-    <div className="flex flex-wrap gap-4 items-center bg-night-800/50 rounded-xl p-4 border border-night-600/30">
-      <span className="text-gold-400 font-bold text-sm">הגדרות</span>
-
-      <div className="flex items-center gap-2">
-        <label htmlFor="model" className="text-sm text-gray-300">מודל:</label>
+    <div className="bg-paper border border-rule rounded-lg p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <SettingField label="מודל">
         <select
-          id="model"
           value={model}
           onChange={(e) => onModelChange(e.target.value as StoryModel)}
-          className="bg-night-700 border border-night-600/50 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-gold-400"
+          className={SELECT_CLASS}
         >
           {STORY_MODELS.map((m) => (
-            <option key={m.value} value={m.value}>{m.label}</option>
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
           ))}
         </select>
-      </div>
+      </SettingField>
 
-      <div className="flex items-center gap-2">
-        <label htmlFor="effort" className="text-sm text-gray-300">חשיבה:</label>
+      <SettingField label="חשיבה">
         <select
-          id="effort"
           value={effort}
           onChange={(e) => onEffortChange(e.target.value as EffortLevel)}
-          className="bg-night-700 border border-night-600/50 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-gold-400"
+          className={SELECT_CLASS}
         >
-          {EFFORT_LEVELS
-            .filter((e) => e.value !== "max" || !model.startsWith("gemini-"))
-            .map((e) => (
-              <option key={e.value} value={e.value}>{e.label}</option>
-            ))}
+          {EFFORT_LEVELS.filter(
+            (e) => e.value !== "max" || !model.startsWith("gemini-"),
+          ).map((e) => (
+            <option key={e.value} value={e.value}>
+              {e.label}
+            </option>
+          ))}
         </select>
-      </div>
+      </SettingField>
 
-      <div className="flex items-center gap-2">
-        <label htmlFor="ttsEngine" className="text-sm text-gray-300">TTS:</label>
+      <SettingField label="הקראה">
         <select
-          id="ttsEngine"
           value={ttsEngine}
           onChange={(e) => {
             const engine = e.target.value as TtsEngine;
             onTtsEngineChange(engine);
-            // Auto-select first voice of new engine
-            const newVoices = engine === "gemini" ? GEMINI_TTS_VOICES : ELEVENLABS_VOICES;
+            const newVoices =
+              engine === "gemini" ? GEMINI_TTS_VOICES : ELEVENLABS_VOICES;
             onVoiceChange(newVoices[0].value);
           }}
-          className="bg-night-700 border border-night-600/50 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-gold-400"
+          className={SELECT_CLASS}
         >
           {TTS_ENGINES.map((e) => (
-            <option key={e.value} value={e.value}>{e.label}</option>
+            <option key={e.value} value={e.value}>
+              {e.label}
+            </option>
           ))}
         </select>
-      </div>
+      </SettingField>
 
-      <div className="flex items-center gap-2">
-        <label htmlFor="voice" className="text-sm text-gray-300">קול:</label>
+      <SettingField label="קול">
         <select
-          id="voice"
           value={voiceId}
           onChange={(e) => onVoiceChange(e.target.value)}
-          className="bg-night-700 border border-night-600/50 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-gold-400"
+          className={SELECT_CLASS}
         >
           {voices.map((v) => (
-            <option key={v.value} value={v.value}>{v.label}</option>
+            <option key={v.value} value={v.value}>
+              {v.label}
+            </option>
           ))}
         </select>
-      </div>
+      </SettingField>
+    </div>
+  );
+}
+
+function SettingField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1">
+      <label className="block text-[10px] uppercase tracking-[0.22em] text-ink-subtle font-medium">
+        {label}
+      </label>
+      {children}
     </div>
   );
 }

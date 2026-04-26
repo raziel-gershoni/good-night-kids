@@ -10,9 +10,14 @@ interface SourceVersesEditorProps {
   onChange: (next: Verse[]) => void;
 }
 
-export function SourceVersesEditor({ verses, onChange }: SourceVersesEditorProps) {
+export function SourceVersesEditor({
+  verses,
+  onChange,
+}: SourceVersesEditorProps) {
   const update = (index: number, field: keyof Verse, value: string) => {
-    const next = verses.map((v, i) => (i === index ? { ...v, [field]: value } : v));
+    const next = verses.map((v, i) =>
+      i === index ? { ...v, [field]: value } : v,
+    );
     onChange(next);
   };
 
@@ -25,32 +30,36 @@ export function SourceVersesEditor({ verses, onChange }: SourceVersesEditorProps
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-gold-400">פסוקי מקור</h3>
-        <span className="text-xs text-gray-500">{verses.length} פסוקים</span>
+        <h3 className="text-[10px] uppercase tracking-[0.22em] text-ink-subtle font-medium">
+          פסוקי מקור
+        </h3>
+        <span className="text-xs text-ink-subtle tabular-nums" dir="ltr">
+          {verses.length}
+        </span>
       </div>
       <div className="space-y-2">
         {verses.map((v, i) => (
           <div
             key={i}
-            className="rounded-xl border border-night-600/50 bg-night-800/40 p-3 space-y-2"
+            className="rounded-md border border-rule bg-paper-2/50 p-3 space-y-2"
           >
             <div className="flex items-center gap-2">
               <input
                 value={v.ref}
                 onChange={(e) => update(i, "ref", e.target.value)}
-                placeholder="הפניה (למשל: Bereshit 1:1)"
-                className="flex-1 bg-night-900 border border-night-600/50 rounded-lg px-2 py-1 text-sm text-white focus:outline-none focus:border-gold-400"
+                placeholder="הפניה (Bereshit 1:1)"
+                className="flex-1 bg-paper border border-rule rounded px-2.5 py-1 text-sm text-ink placeholder:text-ink-subtle focus:outline-none focus:border-brass transition-colors"
                 dir="ltr"
               />
               <button
                 type="button"
                 onClick={() => remove(i)}
-                className="text-xs text-red-400 hover:text-red-300 px-2 py-1"
+                className="text-xs text-ink-subtle hover:text-clay px-2 py-1 transition-colors"
                 aria-label={`מחק פסוק ${i + 1}`}
               >
-                ✕ הסר
+                הסר
               </button>
             </div>
             <textarea
@@ -58,7 +67,7 @@ export function SourceVersesEditor({ verses, onChange }: SourceVersesEditorProps
               onChange={(e) => update(i, "text", e.target.value)}
               rows={2}
               placeholder="טקסט הפסוק בעברית"
-              className="w-full bg-night-900 border border-night-600/50 rounded-lg px-2 py-1 text-sm text-white resize-y focus:outline-none focus:border-gold-400"
+              className="w-full bg-paper border border-rule rounded px-2.5 py-1.5 text-sm text-ink leading-relaxed resize-y focus:outline-none focus:border-brass transition-colors"
             />
           </div>
         ))}
@@ -66,9 +75,9 @@ export function SourceVersesEditor({ verses, onChange }: SourceVersesEditorProps
       <button
         type="button"
         onClick={add}
-        className="text-sm text-gold-400 hover:text-gold-300"
+        className="text-sm text-brass hover:text-brass-soft inline-flex items-center gap-1 transition-colors"
       >
-        + הוסף פסוק
+        <span aria-hidden>+</span> הוסף פסוק
       </button>
     </div>
   );

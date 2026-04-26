@@ -26,9 +26,7 @@ export function ParashaPicker({ selectedId, onSelect }: ParashaPickerProps) {
     (async () => {
       try {
         const res = await fetch("/api/parasha/calendar");
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (cancelled) return;
         const id = data?.parasha?.id as string | undefined;
@@ -58,43 +56,83 @@ export function ParashaPicker({ selectedId, onSelect }: ParashaPickerProps) {
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-bold text-gold-400">בחר פרשה</label>
+      <div className="flex items-center justify-between gap-3">
+        <label
+          htmlFor="parasha-select"
+          className="text-[10px] uppercase tracking-[0.22em] text-ink-subtle font-medium"
+        >
+          בחר פרשה
+        </label>
         {isLoadingCurrent ? (
-          <span className="text-xs text-gray-500">טוען פרשת השבוע...</span>
+          <span className="text-xs text-ink-subtle">טוען פרשת השבוע…</span>
         ) : currentWeekId ? (
           <button
             type="button"
             onClick={() => onSelect(currentWeekId)}
-            className="text-xs text-gold-400 hover:text-gold-300 underline"
+            className="text-xs text-brass hover:text-brass-soft inline-flex items-center gap-1 transition-colors"
           >
-            דלג לפרשת השבוע
+            <StarIcon className="w-3 h-3" />
+            פרשת השבוע
           </button>
         ) : calendarError ? (
-          <span className="text-xs text-red-400" title={calendarError}>
-            לא הצלחתי לקבוע את פרשת השבוע
+          <span className="text-xs text-clay" title={calendarError}>
+            לא הצלחתי לקבוע
           </span>
         ) : null}
       </div>
-      <select
-        value={selectedId ?? ""}
-        onChange={(e) => onSelect(e.target.value)}
-        className="w-full bg-night-800 border border-night-600/50 rounded-xl p-3 text-white focus:outline-none focus:border-gold-400"
-      >
-        <option value="" disabled>
-          — בחר פרשה —
-        </option>
-        {(Object.keys(grouped) as Parasha["book"][]).map((book) => (
-          <optgroup key={book} label={BOOK_LABELS[book]}>
-            {grouped[book].map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.hebrewName}
-                {p.id === currentWeekId ? "  ★ פרשת השבוע" : ""}
-              </option>
-            ))}
-          </optgroup>
-        ))}
-      </select>
+      <div className="relative">
+        <select
+          id="parasha-select"
+          value={selectedId ?? ""}
+          onChange={(e) => onSelect(e.target.value)}
+          className="w-full bg-paper border border-rule rounded-md py-3 pe-10 ps-4 text-ink font-display text-lg focus:outline-none focus:border-brass transition-colors appearance-none"
+        >
+          <option value="" disabled>
+            — בחר פרשה —
+          </option>
+          {(Object.keys(grouped) as Parasha["book"][]).map((book) => (
+            <optgroup key={book} label={BOOK_LABELS[book]}>
+              {grouped[book].map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.hebrewName}
+                  {p.id === currentWeekId ? " ★" : ""}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+        <CaretIcon className="absolute start-3 top-1/2 -translate-y-1/2 text-ink-subtle pointer-events-none" />
+      </div>
     </div>
+  );
+}
+
+function StarIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      aria-hidden
+    >
+      <path d="M8 1l1.9 4.6 5 .4-3.8 3.3 1.2 4.9L8 11.7 3.7 14.2 4.9 9.3 1.1 6l5-.4z" />
+    </svg>
+  );
+}
+
+function CaretIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
   );
 }

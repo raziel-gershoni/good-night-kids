@@ -16,35 +16,43 @@ export function SourceInput({
   onSourceTypeChange,
 }: SourceInputProps) {
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-gold-400">טקסט מקורי</h2>
-        <div className="flex gap-2">
-          {SOURCE_TYPES.map((st) => (
-            <button
-              key={st.value}
-              onClick={() => onSourceTypeChange(st.value)}
-              className={`px-3 py-1 rounded-lg text-sm transition-colors ${
-                sourceType === st.value
-                  ? "bg-gold-500 text-night-900 font-bold"
-                  : "bg-night-700 text-gray-300 hover:bg-night-600"
-              }`}
-            >
-              {st.label}
-            </button>
-          ))}
+    <section className="space-y-3">
+      <header className="flex items-center justify-between gap-3 flex-wrap">
+        <h2 className="font-display text-2xl font-medium text-ink">טקסט מקור</h2>
+        <div
+          role="group"
+          className="inline-flex rounded-md border border-rule bg-paper overflow-hidden"
+        >
+          {SOURCE_TYPES.map((st) => {
+            const active = sourceType === st.value;
+            return (
+              <button
+                key={st.value}
+                onClick={() => onSourceTypeChange(st.value)}
+                className={`px-3 py-1.5 text-sm transition-colors ${
+                  active
+                    ? "bg-brass text-canvas font-medium"
+                    : "text-ink-muted hover:text-ink hover:bg-paper-2"
+                }`}
+              >
+                {st.label}
+              </button>
+            );
+          })}
         </div>
-      </div>
+      </header>
+
       <textarea
         value={originalText}
         onChange={(e) => onTextChange(e.target.value)}
-        placeholder="הדבק כאן טקסט מהמקור..."
+        placeholder="הדבק כאן טקסט מהמקור…"
         rows={6}
-        className="w-full bg-night-800 border border-night-600/50 rounded-xl p-4 text-white placeholder-gray-500 resize-y focus:outline-none focus:border-gold-400 leading-relaxed"
+        className="w-full bg-paper border border-rule rounded-md p-4 text-ink placeholder:text-ink-subtle resize-y focus:outline-none focus:border-brass transition-colors leading-relaxed"
       />
-      <div className="text-xs text-gray-500 text-left">
+
+      <div className="text-xs text-ink-subtle text-left tabular-nums" dir="ltr">
         {originalText.length} תווים
       </div>
-    </div>
+    </section>
   );
 }

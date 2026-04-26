@@ -7,26 +7,18 @@ import { EditablePrompt } from "./editable-prompt";
 import { SourceVersesEditor } from "./source-verses-editor";
 import { SanityReportCard } from "./sanity-report-card";
 import { AudioPlayer } from "./audio-player";
+import { Button, Section } from "./ui";
 import { findParashaById } from "@/lib/parasha/list";
 import { PARASHA_EXTRACT_IDEA_PROMPT } from "@/lib/prompts/parasha-extract-idea";
 import { PARASHA_GENERATE_STORY_PROMPT } from "@/lib/prompts/parasha-generate-story";
 import { PARASHA_SANITY_CHECK_PROMPT } from "@/lib/prompts/parasha-sanity-check";
-import type {
-  StoryModel,
-  EffortLevel,
-  TtsEngine,
-} from "@/lib/types";
+import type { StoryModel, EffortLevel, TtsEngine } from "@/lib/types";
 import type { SanityReport } from "@/lib/llm/schemas";
 
 interface Verse {
   ref: string;
   text: string;
 }
-
-const STEP_HEADER_CLASS =
-  "text-lg font-bold text-gold-400 flex items-center gap-2";
-const STEP_NUM_CLASS =
-  "inline-flex items-center justify-center w-7 h-7 rounded-full bg-gold-500 text-night-900 text-sm font-bold";
 
 export function ParashaWizard() {
   // Settings
@@ -51,7 +43,7 @@ export function ParashaWizard() {
   const [childrenStory, setChildrenStory] = useState<string>("");
   const [isGeneratingStory, setIsGeneratingStory] = useState(false);
 
-  // Step 4: sanity check
+  // Step 4: sanity
   const [sanityPrompt, setSanityPrompt] = useState<string>("");
   const [sanityReport, setSanityReport] = useState<SanityReport | null>(null);
   const [isCheckingSanity, setIsCheckingSanity] = useState(false);
@@ -86,7 +78,9 @@ export function ParashaWizard() {
     setSavedSlug(null);
     (async () => {
       try {
-        const res = await fetch(`/api/parasha/text?id=${encodeURIComponent(parashaId)}`);
+        const res = await fetch(
+          `/api/parasha/text?id=${encodeURIComponent(parashaId)}`,
+        );
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
           throw new Error(data?.error || `HTTP ${res.status}`);
@@ -277,15 +271,10 @@ export function ParashaWizard() {
     audioBase64,
   ]);
 
-  const Spinner = () => (
-    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-    </svg>
-  );
+  const wordCount = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       <SettingsBar
         model={model}
         effort={effort}
@@ -298,175 +287,186 @@ export function ParashaWizard() {
       />
 
       {error && (
-        <div className="bg-red-900/30 border border-red-500/50 rounded-xl p-3 text-red-300 text-sm">
+        <div className="rounded-md border border-clay/50 bg-clay/5 p-3 text-clay text-sm">
           {error}
         </div>
       )}
 
-      {/* Step 1: pick parasha */}
-      <div className="space-y-3">
-        <h2 className={STEP_HEADER_CLASS}>
-          <span className={STEP_NUM_CLASS}>1</span>
-          פרשה
-        </h2>
+      {/* Step 1 */}
+      <Section step={1} title="פרשה" description="בחרו פרשה — ברירת המחדל היא פרשת השבוע">
         <ParashaPicker selectedId={parashaId} onSelect={setParashaId} />
         {parashaId && (
-          <div className="text-xs text-gray-400">
+          <div className="mt-2 text-xs text-ink-subtle tabular-nums" dir="ltr">
             {isLoadingText
-              ? "טוען טקסט מספריא..."
+              ? "טוען טקסט מספריא…"
               : parashaText
-                ? `נטענו ${parashaText.length.toLocaleString()} תווים מספריא`
+                ? `${parashaText.length.toLocaleString()} תווים מספריא`
                 : "לא נטען טקסט"}
           </div>
         )}
-      </div>
+      </Section>
 
-      {/* Step 2: extract idea */}
+      {/* Step 2 */}
       {parashaId && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className={STEP_HEADER_CLASS}>
-              <span className={STEP_NUM_CLASS}>2</span>
-              חילוץ רעיון ופסוקים
-            </h2>
-            <button
+        <Section
+          step={2}
+          title="חילוץ רעיון ופסוקים"
+          description="ה-LLM מציע רעיון אחד ופסוקים מקוריים — ניתן לערוך גם את הפרומפט וגם את הפלט"
+          action={
+            <Button
               onClick={extractIdea}
+              loading={isExtractingIdea}
               disabled={!parashaText.trim() || isExtractingIdea}
-              className="px-5 py-2 bg-gold-500 hover:bg-gold-400 disabled:bg-night-600 disabled:text-gray-500 text-night-900 font-bold rounded-xl transition-colors flex items-center gap-2"
             >
-              {isExtractingIdea && <Spinner />}
-              {isExtractingIdea ? "מחלץ..." : idea ? "חלץ מחדש" : "חלץ רעיון"}
-            </button>
-          </div>
-          <EditablePrompt
-            storageKey="parasha.extractIdea.prompt"
-            defaultPrompt={PARASHA_EXTRACT_IDEA_PROMPT}
-            value={extractPrompt}
-            onChange={setExtractPrompt}
-          />
-          {idea && (
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-gold-400">הרעיון</label>
-                <textarea
-                  value={idea}
-                  onChange={(e) => setIdea(e.target.value)}
-                  rows={3}
-                  className="w-full bg-night-800 border border-night-600/50 rounded-xl p-3 text-white resize-y focus:outline-none focus:border-gold-400"
+              {isExtractingIdea ? "מחלץ…" : idea ? "חלץ מחדש" : "חלץ רעיון"}
+            </Button>
+          }
+        >
+          <div className="space-y-4">
+            <EditablePrompt
+              storageKey="parasha.extractIdea.prompt"
+              defaultPrompt={PARASHA_EXTRACT_IDEA_PROMPT}
+              value={extractPrompt}
+              onChange={setExtractPrompt}
+            />
+            {idea && (
+              <div className="space-y-4 paper-fade">
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] uppercase tracking-[0.22em] text-ink-subtle font-medium">
+                    הרעיון
+                  </label>
+                  <textarea
+                    value={idea}
+                    onChange={(e) => setIdea(e.target.value)}
+                    rows={3}
+                    className="w-full bg-paper border border-rule rounded-md p-3 text-ink leading-relaxed resize-y focus:outline-none focus:border-brass transition-colors"
+                  />
+                </div>
+                <SourceVersesEditor
+                  verses={sourceVerses}
+                  onChange={setSourceVerses}
                 />
               </div>
-              <SourceVersesEditor verses={sourceVerses} onChange={setSourceVerses} />
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </Section>
       )}
 
-      {/* Step 3: generate story */}
+      {/* Step 3 */}
       {idea && sourceVerses.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className={STEP_HEADER_CLASS}>
-              <span className={STEP_NUM_CLASS}>3</span>
-              יצירת סיפור
-            </h2>
-            <button
+        <Section
+          step={3}
+          title="יצירת סיפור"
+          description="סיפור מקורי שמסביר את הרעיון, עם גשר אחד מפורש לפסוקי הפרשה"
+          action={
+            <Button
               onClick={generateStory}
+              loading={isGeneratingStory}
               disabled={isGeneratingStory}
-              className="px-5 py-2 bg-gold-500 hover:bg-gold-400 disabled:bg-night-600 disabled:text-gray-500 text-night-900 font-bold rounded-xl transition-colors flex items-center gap-2"
             >
-              {isGeneratingStory && <Spinner />}
-              {isGeneratingStory ? "יוצר..." : childrenStory ? "צור מחדש" : "צור סיפור"}
-            </button>
-          </div>
-          <EditablePrompt
-            storageKey="parasha.generateStory.prompt"
-            defaultPrompt={PARASHA_GENERATE_STORY_PROMPT}
-            value={storyPrompt}
-            onChange={setStoryPrompt}
-          />
-          {childrenStory && (
-            <>
-              <textarea
-                value={childrenStory}
-                onChange={(e) => setChildrenStory(e.target.value)}
-                rows={12}
-                className="w-full bg-night-800 border border-night-600/50 rounded-xl p-4 text-white resize-y focus:outline-none focus:border-gold-400 leading-relaxed"
-              />
-              <div className="text-xs text-gray-500 text-left">
-                {childrenStory.trim().split(/\s+/).filter(Boolean).length} מילים | {childrenStory.length} תווים
+              {isGeneratingStory ? "יוצר…" : childrenStory ? "צור מחדש" : "צור סיפור"}
+            </Button>
+          }
+        >
+          <div className="space-y-4">
+            <EditablePrompt
+              storageKey="parasha.generateStory.prompt"
+              defaultPrompt={PARASHA_GENERATE_STORY_PROMPT}
+              value={storyPrompt}
+              onChange={setStoryPrompt}
+            />
+            {childrenStory && (
+              <div className="space-y-1.5 paper-fade">
+                <textarea
+                  value={childrenStory}
+                  onChange={(e) => setChildrenStory(e.target.value)}
+                  rows={14}
+                  className="w-full bg-paper border border-rule rounded-md p-5 text-ink leading-loose font-display text-base resize-y focus:outline-none focus:border-brass transition-colors"
+                />
+                <div
+                  className="text-xs text-ink-subtle text-left tabular-nums"
+                  dir="ltr"
+                >
+                  {wordCount(childrenStory)} מילים · {childrenStory.length} תווים
+                </div>
               </div>
-            </>
-          )}
-        </div>
+            )}
+          </div>
+        </Section>
       )}
 
-      {/* Step 4: sanity check */}
+      {/* Step 4 */}
       {childrenStory && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className={STEP_HEADER_CLASS}>
-              <span className={STEP_NUM_CLASS}>4</span>
-              בדיקת איכות
-            </h2>
-            <button
+        <Section
+          step={4}
+          title="בדיקת איכות"
+          description="בודק את הסיפור מול הרעיון, הפסוקים והגיל — אופציונלי"
+          action={
+            <Button
+              variant="secondary"
               onClick={runSanityCheck}
+              loading={isCheckingSanity}
               disabled={isCheckingSanity}
-              className="px-5 py-2 bg-night-700 hover:bg-night-600 disabled:bg-night-800 disabled:text-gray-600 text-white font-bold rounded-xl transition-colors flex items-center gap-2 border border-night-600/50"
             >
-              {isCheckingSanity && <Spinner />}
-              {isCheckingSanity ? "בודק..." : sanityReport ? "בדוק שוב" : "בדוק איכות"}
-            </button>
+              {isCheckingSanity ? "בודק…" : sanityReport ? "בדוק שוב" : "בדוק איכות"}
+            </Button>
+          }
+        >
+          <div className="space-y-4">
+            <EditablePrompt
+              storageKey="parasha.sanityCheck.prompt"
+              defaultPrompt={PARASHA_SANITY_CHECK_PROMPT}
+              value={sanityPrompt}
+              onChange={setSanityPrompt}
+            />
+            {sanityReport && <SanityReportCard report={sanityReport} />}
           </div>
-          <EditablePrompt
-            storageKey="parasha.sanityCheck.prompt"
-            defaultPrompt={PARASHA_SANITY_CHECK_PROMPT}
-            value={sanityPrompt}
-            onChange={setSanityPrompt}
-          />
-          {sanityReport && <SanityReportCard report={sanityReport} />}
-        </div>
+        </Section>
       )}
 
-      {/* Step 5: audio */}
+      {/* Step 5 */}
       {childrenStory && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className={STEP_HEADER_CLASS}>
-              <span className={STEP_NUM_CLASS}>5</span>
-              הקראה
-            </h2>
-            <button
+        <Section
+          step={5}
+          title="הקראה"
+          description="הסיפור הופך לאודיו דרך מנוע ה-TTS שנבחר"
+          action={
+            <Button
               onClick={generateAudio}
+              loading={isGeneratingAudio}
               disabled={isGeneratingAudio}
-              className="px-5 py-2 bg-gold-500 hover:bg-gold-400 disabled:bg-night-600 disabled:text-gray-500 text-night-900 font-bold rounded-xl transition-colors flex items-center gap-2"
             >
-              {isGeneratingAudio && <Spinner />}
-              {isGeneratingAudio ? "מקריא..." : audioUrl ? "הקרא מחדש" : "צור הקראה"}
-            </button>
-          </div>
+              {isGeneratingAudio
+                ? "מקריא…"
+                : audioUrl
+                  ? "הקרא מחדש"
+                  : "צור הקראה"}
+            </Button>
+          }
+        >
           <AudioPlayer audioUrl={audioUrl} isLoading={isGeneratingAudio} />
-        </div>
+        </Section>
       )}
 
       {/* Save */}
       {childrenStory && (
-        <div className="flex items-center gap-3 pt-2">
-          <button
+        <div className="flex items-center gap-4 pt-2 flex-wrap">
+          <Button
+            variant="secondary"
             onClick={handleSave}
+            loading={isSaving}
             disabled={isSaving}
-            className="px-5 py-2 bg-night-700 hover:bg-night-600 disabled:bg-night-800 disabled:text-gray-600 text-white font-bold rounded-xl transition-colors flex items-center gap-2 border border-night-600/50"
           >
-            {isSaving && <Spinner />}
-            {isSaving ? "שומר..." : "שמור"}
-          </button>
+            {isSaving ? "שומר…" : "שמור"}
+          </Button>
           {savedSlug && (
             <a
               href={`/share/${savedSlug}`}
               target="_blank"
               rel="noreferrer"
-              className="text-sm text-gold-400 hover:text-gold-300 underline"
+              className="text-sm text-brass hover:text-brass-soft underline-offset-4 hover:underline transition-colors"
             >
-              ✓ נשמר — פתח עמוד שיתוף
+              נשמר — פתח עמוד שיתוף ←
             </a>
           )}
         </div>
