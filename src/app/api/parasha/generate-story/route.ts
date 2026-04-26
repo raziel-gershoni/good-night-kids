@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ThinkingLevel } from "@google/genai";
 import { getGeminiClient } from "@/lib/gemini/client";
 import { PARASHA_GENERATE_STORY_PROMPT } from "@/lib/prompts/parasha-generate-story";
+import { pickVariationHint } from "@/lib/parasha/variation";
 import type { GeminiModel, EffortLevel, StoryModel } from "@/lib/types";
 
 export const maxDuration = 300;
@@ -43,7 +44,9 @@ export async function POST(request: Request) {
     const versesBlock = (sourceVerses as { ref: string; text: string }[])
       .map((v) => `- ${v.ref}: ${v.text}`)
       .join("\n");
-    const userPrompt = `שם הפרשה: ${parashaName ?? "(לא צוין)"}\n\nהרעיון:\n${idea}\n\nפסוקי המקור:\n${versesBlock}\n\nכתוב את סיפור השינה לפי החוקים.`;
+    const hint = pickVariationHint();
+    const hintBlock = `רמז וריאציה (חובה לכבד):\n- גיבור/ה: ${hint.protagonist}\n- מיקום: ${hint.setting}\n- תקופה/אווירה: ${hint.era}`;
+    const userPrompt = `שם הפרשה: ${parashaName ?? "(לא צוין)"}\n\nהרעיון:\n${idea}\n\nפסוקי המקור:\n${versesBlock}\n\n${hintBlock}\n\nכתוב את הסיפור לפי החוקים.`;
 
     const ai = getGeminiClient();
     const response = await ai.models.generateContent({
