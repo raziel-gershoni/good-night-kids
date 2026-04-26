@@ -13,6 +13,10 @@ export async function createStory(data: {
   model: string;
   thinkingLevel?: string;
   title?: string;
+  parashaRef?: string;
+  parashaIdea?: NewStory["parashaIdea"];
+  sanityReport?: NewStory["sanityReport"];
+  stepPrompts?: NewStory["stepPrompts"];
 }): Promise<{ id: string; slug: string }> {
   const slug = generateSlug();
   const title =
@@ -31,6 +35,10 @@ export async function createStory(data: {
       audioMimeType: data.audioMimeType || null,
       model: data.model,
       thinkingLevel: data.thinkingLevel || null,
+      parashaRef: data.parashaRef || null,
+      parashaIdea: data.parashaIdea ?? null,
+      sanityReport: data.sanityReport ?? null,
+      stepPrompts: data.stepPrompts ?? null,
     })
     .returning({ id: stories.id, slug: stories.slug });
 

@@ -37,6 +37,10 @@ export async function POST(request: Request) {
       model: body.model || "claude-sonnet-4-6",
       thinkingLevel: body.effort || body.thinkingLevel,
       title: body.title,
+      parashaRef: body.parashaRef,
+      parashaIdea: body.parashaIdea,
+      sanityReport: body.sanityReport,
+      stepPrompts: body.stepPrompts,
     });
 
     return NextResponse.json(result);

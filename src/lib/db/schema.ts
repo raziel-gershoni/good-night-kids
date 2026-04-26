@@ -6,6 +6,7 @@ import {
   varchar,
   pgEnum,
   customType,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Buffer; driverData: string }>({
@@ -41,6 +42,21 @@ export const stories = pgTable("stories", {
   audioMimeType: varchar("audio_mime_type", { length: 50 }),
   model: varchar("model", { length: 100 }).notNull(),
   thinkingLevel: varchar("thinking_level", { length: 20 }),
+  parashaRef: varchar("parasha_ref", { length: 100 }),
+  parashaIdea: jsonb("parasha_idea").$type<{
+    idea: string;
+    sourceVerses: { ref: string; text: string }[];
+  }>(),
+  sanityReport: jsonb("sanity_report").$type<{
+    status: "ok" | "minor" | "major";
+    issues: string[];
+    suggestions: string[];
+  }>(),
+  stepPrompts: jsonb("step_prompts").$type<{
+    extractIdea: string;
+    generateStory: string;
+    sanityCheck: string;
+  }>(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

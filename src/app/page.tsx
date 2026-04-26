@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { StoryWizard } from "@/components/story-wizard";
 
 export default function Home() {
@@ -10,6 +11,14 @@ export default function Home() {
         <p className="text-gray-400 text-sm">
           סיפורי שינה מהמסורת היהודית, מופעלים בבינה מלאכותית
         </p>
+        <div className="mt-3">
+          <Link
+            href="/parasha"
+            className="inline-block text-sm text-gold-400 hover:text-gold-300 underline"
+          >
+            ← סיפור מפרשת השבוע
+          </Link>
+        </div>
       </div>
       <StoryWizard />
     </main>
