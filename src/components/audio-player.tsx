@@ -71,7 +71,7 @@ export function AudioPlayer({ audioUrl, isLoading }: AudioPlayerProps) {
         onEnded={() => setIsPlaying(false)}
       />
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
         <button
           onClick={togglePlay}
           aria-label={isPlaying ? "השהה" : "נגן"}
@@ -95,22 +95,23 @@ export function AudioPlayer({ audioUrl, isLoading }: AudioPlayerProps) {
           max={duration || 0}
           value={currentTime}
           onChange={handleSeek}
-          className="flex-1 h-1"
+          className="flex-1 h-1 min-w-0"
           aria-label="התקדמות"
         />
 
         <span
-          className="text-sm text-ink-muted font-mono tabular-nums min-w-[5rem] text-center"
+          className="text-xs sm:text-sm text-ink-muted font-mono tabular-nums shrink-0"
           dir="ltr"
         >
-          {formatTime(currentTime)} / {formatTime(duration)}
+          {formatTime(currentTime)}
+          <span className="hidden sm:inline"> / {formatTime(duration)}</span>
         </span>
 
         <button
           onClick={handleDownload}
           aria-label="הורד"
           title="הורד"
-          className="text-ink-muted hover:text-brass transition-colors p-1.5 rounded-md hover:bg-paper-2"
+          className="text-ink-muted hover:text-brass transition-colors p-1.5 rounded-md hover:bg-paper-2 shrink-0"
         >
           <svg
             className="w-4 h-4"

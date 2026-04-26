@@ -37,7 +37,7 @@ export default async function SharePage({ params }: PageProps) {
   if (!story) notFound();
 
   return (
-    <main className="container mx-auto max-w-2xl px-6 py-12">
+    <main className="container mx-auto max-w-2xl px-4 sm:px-6 py-8 sm:py-12">
       <article className="space-y-8">
         <header className="text-center space-y-3 paper-fade">
           <div className="text-[10px] uppercase tracking-[0.3em] text-brass">
@@ -62,7 +62,7 @@ export default async function SharePage({ params }: PageProps) {
         )}
 
         {story.childrenStory && (
-          <div className="bg-paper border border-rule rounded-lg p-8 text-ink leading-loose font-display text-lg whitespace-pre-wrap story-body">
+          <div className="bg-paper border border-rule rounded-lg p-5 sm:p-8 text-ink leading-loose font-display text-base sm:text-lg whitespace-pre-wrap story-body">
             {story.childrenStory}
           </div>
         )}

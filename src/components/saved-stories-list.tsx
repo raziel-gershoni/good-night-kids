@@ -55,37 +55,45 @@ export function SavedStoriesList({ onLoad }: SavedStoriesListProps) {
         {stories.map((story, idx) => (
           <article
             key={story.id}
-            className={`flex items-center justify-between gap-3 px-4 py-3 ${
+            className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 ${
               idx > 0 ? "border-t border-rule" : ""
             } hover:bg-paper-2 transition-colors`}
           >
-            <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <span className="text-[10px] uppercase tracking-[0.2em] text-ink-subtle px-2 py-0.5 border border-rule rounded shrink-0">
                 {SOURCE_LABELS[story.sourceType] || story.sourceType}
               </span>
-              <span className="font-display text-base text-ink truncate" title={story.title || undefined}>
+              <span
+                className="font-display text-base text-ink truncate"
+                title={story.title || undefined}
+              >
                 {story.title || "סיפור ללא שם"}
               </span>
               {story.hasAudio && (
                 <SpeakerIcon className="w-3.5 h-3.5 text-brass shrink-0" />
               )}
-              <span className="text-xs text-ink-subtle tabular-nums shrink-0 ms-auto" dir="ltr">
+            </div>
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0 justify-between sm:justify-end">
+              <span
+                className="text-xs text-ink-subtle tabular-nums"
+                dir="ltr"
+              >
                 {new Date(story.createdAt).toLocaleDateString("he-IL")}
               </span>
-            </div>
-            <div className="flex gap-1 shrink-0">
-              <button
-                onClick={() => onLoad(story)}
-                className="text-xs px-2.5 py-1 text-ink-muted hover:text-brass hover:bg-paper-2 rounded transition-colors"
-              >
-                טען
-              </button>
-              <button
-                onClick={() => handleDelete(story.id)}
-                className="text-xs px-2.5 py-1 text-ink-subtle hover:text-clay hover:bg-paper-2 rounded transition-colors"
-              >
-                מחק
-              </button>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => onLoad(story)}
+                  className="text-xs px-2.5 py-1 text-ink-muted hover:text-brass hover:bg-paper-2 rounded transition-colors"
+                >
+                  טען
+                </button>
+                <button
+                  onClick={() => handleDelete(story.id)}
+                  className="text-xs px-2.5 py-1 text-ink-subtle hover:text-clay hover:bg-paper-2 rounded transition-colors"
+                >
+                  מחק
+                </button>
+              </div>
             </div>
           </article>
         ))}

@@ -274,7 +274,7 @@ export function ParashaWizard() {
   const wordCount = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8 sm:space-y-10">
       <SettingsBar
         model={model}
         effort={effort}
@@ -381,7 +381,7 @@ export function ParashaWizard() {
                   value={childrenStory}
                   onChange={(e) => setChildrenStory(e.target.value)}
                   rows={14}
-                  className="w-full bg-paper border border-rule rounded-md p-5 text-ink leading-loose font-display text-base resize-y focus:outline-none focus:border-brass transition-colors"
+                  className="w-full bg-paper border border-rule rounded-md p-4 sm:p-5 text-ink leading-loose font-display text-base resize-y focus:outline-none focus:border-brass transition-colors"
                 />
                 <div
                   className="text-xs text-ink-subtle text-left tabular-nums"

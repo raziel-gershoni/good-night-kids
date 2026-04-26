@@ -265,7 +265,7 @@ export function StoryWizard() {
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8 sm:space-y-10">
       <SettingsBar
         model={model}
         effort={effort}

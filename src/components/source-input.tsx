@@ -17,11 +17,13 @@ export function SourceInput({
 }: SourceInputProps) {
   return (
     <section className="space-y-3">
-      <header className="flex items-center justify-between gap-3 flex-wrap">
-        <h2 className="font-display text-2xl font-medium text-ink">טקסט מקור</h2>
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+        <h2 className="font-display text-xl sm:text-2xl font-medium text-ink">
+          טקסט מקור
+        </h2>
         <div
           role="group"
-          className="inline-flex rounded-md border border-rule bg-paper overflow-hidden"
+          className="inline-flex rounded-md border border-rule bg-paper overflow-hidden self-start sm:self-auto"
         >
           {SOURCE_TYPES.map((st) => {
             const active = sourceType === st.value;
@@ -29,7 +31,7 @@ export function SourceInput({
               <button
                 key={st.value}
                 onClick={() => onSourceTypeChange(st.value)}
-                className={`px-3 py-1.5 text-sm transition-colors ${
+                className={`px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm transition-colors ${
                   active
                     ? "bg-brass text-canvas font-medium"
                     : "text-ink-muted hover:text-ink hover:bg-paper-2"

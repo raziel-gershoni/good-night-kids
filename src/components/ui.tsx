@@ -91,19 +91,25 @@ interface SectionProps {
 export function Section({ step, title, action, description, children }: SectionProps) {
   return (
     <section className="space-y-4">
-      <header className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="flex items-start gap-3 min-w-0">
           <span className="step-num">{step}</span>
-          <div className="flex flex-col">
-            <h2 className="font-display text-2xl font-medium text-ink leading-tight">
+          <div className="flex flex-col min-w-0">
+            <h2 className="font-display text-xl sm:text-2xl font-medium text-ink leading-tight">
               {title}
             </h2>
             {description && (
-              <p className="text-xs text-ink-subtle mt-0.5">{description}</p>
+              <p className="text-xs text-ink-subtle mt-0.5 leading-relaxed">
+                {description}
+              </p>
             )}
           </div>
         </div>
-        {action && <div className="shrink-0">{action}</div>}
+        {action && (
+          <div className="shrink-0 ps-11 sm:ps-0 self-start sm:self-auto">
+            {action}
+          </div>
+        )}
       </header>
       {children && <div className="paper-fade">{children}</div>}
     </section>

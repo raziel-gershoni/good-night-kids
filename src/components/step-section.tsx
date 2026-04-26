@@ -29,16 +29,18 @@ export function StepSection({
 
   return (
     <section className="space-y-4">
-      <header className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="flex items-center gap-3 min-w-0">
           <span className="step-num">{stepNumber}</span>
-          <h2 className="font-display text-2xl font-medium text-ink leading-tight">
+          <h2 className="font-display text-xl sm:text-2xl font-medium text-ink leading-tight">
             {title}
           </h2>
         </div>
-        <Button onClick={onGenerate} loading={isLoading} disabled={isDisabled}>
-          {isLoading ? "מעבד…" : buttonLabel}
-        </Button>
+        <div className="ps-11 sm:ps-0">
+          <Button onClick={onGenerate} loading={isLoading} disabled={isDisabled}>
+            {isLoading ? "מעבד…" : buttonLabel}
+          </Button>
+        </div>
       </header>
 
       {value && (

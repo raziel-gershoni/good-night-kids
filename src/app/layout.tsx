@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Frank_Ruhl_Libre, Assistant } from "next/font/google";
 import "./globals.css";
 import { ThemeInitScript } from "@/components/theme-toggle";
@@ -21,6 +21,15 @@ const assistant = Assistant({
 export const metadata: Metadata = {
   title: "לילה טוב ילדים",
   description: "סיפורי שינה לילדים מהמסורת היהודית",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5f0e4" },
+    { media: "(prefers-color-scheme: dark)", color: "#0c0e13" },
+  ],
 };
 
 export default function RootLayout({
