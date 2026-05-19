@@ -1,7 +1,7 @@
 export type SourceType = "tanakh" | "gmara" | "zohar" | "midrash" | "other";
 
 export type ClaudeModel = "claude-sonnet-4-6" | "claude-opus-4-7";
-export type GeminiModel = "gemini-3.1-flash-lite-preview" | "gemini-3.1-pro-preview";
+export type GeminiModel = "gemini-3.1-flash-lite" | "gemini-3.1-pro-preview";
 export type StoryModel = ClaudeModel | GeminiModel;
 
 export type EffortLevel = "low" | "medium" | "high" | "max";
@@ -11,7 +11,7 @@ export type TtsEngine = "elevenlabs" | "gemini";
 export const STORY_MODELS: { value: StoryModel; label: string }[] = [
   { value: "claude-sonnet-4-6", label: "Claude Sonnet 4.6" },
   { value: "claude-opus-4-7", label: "Claude Opus 4.7" },
-  { value: "gemini-3.1-flash-lite-preview", label: "Gemini 3.1 Flash Lite" },
+  { value: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash Lite" },
   { value: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro" },
 ];
 

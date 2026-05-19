@@ -22,7 +22,7 @@ interface Verse {
 
 export function ParashaWizard() {
   // Settings
-  const [model, setModel] = useState<StoryModel>("gemini-3.1-flash-lite-preview");
+  const [model, setModel] = useState<StoryModel>("gemini-3.1-flash-lite");
   const [effort, setEffort] = useState<EffortLevel>("high");
   const [ttsEngine, setTtsEngine] = useState<TtsEngine>("gemini");
   const [voiceId, setVoiceId] = useState("Aoede");

@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing idea" }, { status: 400 });
     }
 
-    const selectedModel: StoryModel = model || "gemini-3.1-flash-lite-preview";
+    const selectedModel: StoryModel = model || "gemini-3.1-flash-lite";
     if (!isGeminiModel(selectedModel)) {
       return NextResponse.json(
         { error: "JSON-validated steps require a Gemini model" },
