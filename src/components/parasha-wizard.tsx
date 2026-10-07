@@ -12,7 +12,7 @@ import { findParashaById } from "@/lib/parasha/list";
 import { PARASHA_EXTRACT_IDEA_PROMPT } from "@/lib/prompts/parasha-extract-idea";
 import { PARASHA_GENERATE_STORY_PROMPT } from "@/lib/prompts/parasha-generate-story";
 import { PARASHA_SANITY_CHECK_PROMPT } from "@/lib/prompts/parasha-sanity-check";
-import type { StoryModel, EffortLevel, TtsEngine } from "@/lib/types";
+import { DEFAULT_GEMINI_MODEL, type StoryModel, type EffortLevel, type TtsEngine } from "@/lib/types";
 import type { SanityReport } from "@/lib/llm/schemas";
 
 interface Verse {
@@ -22,7 +22,7 @@ interface Verse {
 
 export function ParashaWizard() {
   // Settings
-  const [model, setModel] = useState<StoryModel>("gemini-3.1-flash-lite");
+  const [model, setModel] = useState<StoryModel>(DEFAULT_GEMINI_MODEL);
   const [effort, setEffort] = useState<EffortLevel>("high");
   const [ttsEngine, setTtsEngine] = useState<TtsEngine>("gemini");
   const [voiceId, setVoiceId] = useState("Aoede");

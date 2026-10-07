@@ -3,7 +3,7 @@ import { ThinkingLevel } from "@google/genai";
 import { getGeminiClient } from "@/lib/gemini/client";
 import { PARASHA_GENERATE_STORY_PROMPT } from "@/lib/prompts/parasha-generate-story";
 import { pickVariationHint } from "@/lib/parasha/variation";
-import type { GeminiModel, EffortLevel, StoryModel } from "@/lib/types";
+import { DEFAULT_GEMINI_MODEL, type GeminiModel, type EffortLevel, type StoryModel } from "@/lib/types";
 
 export const maxDuration = 300;
 
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing source verses" }, { status: 400 });
     }
 
-    const selectedModel: StoryModel = model || "gemini-3.1-flash-lite";
+    const selectedModel: StoryModel = model || DEFAULT_GEMINI_MODEL;
     if (!isGeminiModel(selectedModel)) {
       return NextResponse.json(
         { error: "Parasha story generation currently requires a Gemini model" },

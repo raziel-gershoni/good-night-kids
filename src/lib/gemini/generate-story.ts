@@ -4,7 +4,7 @@ import type { GeminiModel, EffortLevel, SourceType } from "../types";
 
 import { ThinkingLevel } from "@google/genai";
 
-// Gemini 3.1 uses thinkingLevel enum, not thinkingBudget
+// Gemini 3.x uses thinkingLevel enum, not thinkingBudget (3.8 Flash rejects MINIMAL)
 const THINKING_LEVELS: Record<EffortLevel, ThinkingLevel> = {
   low: ThinkingLevel.LOW,
   medium: ThinkingLevel.MEDIUM,

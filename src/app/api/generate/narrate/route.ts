@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateSpeech } from "@/lib/tts/elevenlabs";
 import { generateSpeechGemini } from "@/lib/tts/gemini-tts";
+import { isGeminiTtsEngine } from "@/lib/types";
 
 export const maxDuration = 300;
 
@@ -23,11 +24,12 @@ export async function POST(request: Request) {
     console.log("TTS engine:", ttsEngine || "elevenlabs");
     console.log("TTS text length:", textForTts.length);
 
-    if (ttsEngine === "gemini") {
-      // Gemini TTS - keep audio tags, they work with this engine
+    if (isGeminiTtsEngine(ttsEngine)) {
+      // Gemini TTS - keep [tags]; generateSpeechGemini converts them to 3.8 syntax
       const audioBuffer = await generateSpeechGemini({
         text: textForTts,
         voiceName: voiceId || "Aoede",
+        engine: ttsEngine,
       });
 
       return NextResponse.json({

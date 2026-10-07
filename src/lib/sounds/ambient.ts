@@ -84,7 +84,7 @@ export async function findEffectTimestamps(
   console.log("Asking Gemini for effect timestamps...");
 
   const response = await ai.models.generateContent({
-    model: "gemini-3.1-flash-lite",
+    model: "gemini-3.8-flash",
     config: {
       thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
     },

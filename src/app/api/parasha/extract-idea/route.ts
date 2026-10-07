@@ -5,7 +5,7 @@ import {
 } from "@/lib/llm/validated-json";
 import { parashaIdeaSchema } from "@/lib/llm/schemas";
 import { PARASHA_EXTRACT_IDEA_PROMPT } from "@/lib/prompts/parasha-extract-idea";
-import type { GeminiModel, EffortLevel, StoryModel } from "@/lib/types";
+import { DEFAULT_GEMINI_MODEL, type GeminiModel, type EffortLevel, type StoryModel } from "@/lib/types";
 
 export const maxDuration = 300;
 
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing parasha text" }, { status: 400 });
     }
 
-    const selectedModel: StoryModel = model || "gemini-3.1-flash-lite";
+    const selectedModel: StoryModel = model || DEFAULT_GEMINI_MODEL;
     if (!isGeminiModel(selectedModel)) {
       return NextResponse.json(
         { error: "JSON-validated steps require a Gemini model" },

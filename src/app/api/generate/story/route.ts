@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateStory } from "@/lib/claude/generate-story";
 import { generateStoryGemini } from "@/lib/gemini/generate-story";
-import type { StoryModel } from "@/lib/types";
+import type { GeminiModel, StoryModel } from "@/lib/types";
 
 export const maxDuration = 300;
 
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       childrenStory = await generateStoryGemini({
         originalText,
         sourceType: sourceType || "other",
-        model: selectedModel as "gemini-3.1-flash-lite" | "gemini-3.1-pro-preview",
+        model: selectedModel as GeminiModel,
         effort: effort || "high",
       });
     } else {

@@ -8,18 +8,19 @@ import { AudioPlayer } from "./audio-player";
 import { StoryActions } from "./story-actions";
 import { SavedStoriesList } from "./saved-stories-list";
 import { Button } from "./ui";
-import type {
-  StoryModel,
-  EffortLevel,
-  TtsEngine,
-  SourceType,
-  SavedStory,
+import {
+  DEFAULT_GEMINI_MODEL,
+  type StoryModel,
+  type EffortLevel,
+  type TtsEngine,
+  type SourceType,
+  type SavedStory,
 } from "@/lib/types";
 import { audioBufferToWav } from "@/lib/audio-utils";
 
 export function StoryWizard() {
   // Settings
-  const [model, setModel] = useState<StoryModel>("gemini-3.1-flash-lite");
+  const [model, setModel] = useState<StoryModel>(DEFAULT_GEMINI_MODEL);
   const [effort, setEffort] = useState<EffortLevel>("high");
   const [ttsEngine, setTtsEngine] = useState<TtsEngine>("gemini");
   const [voiceId, setVoiceId] = useState("Aoede");

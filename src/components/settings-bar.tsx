@@ -6,6 +6,7 @@ import {
   TTS_ENGINES,
   ELEVENLABS_VOICES,
   GEMINI_TTS_VOICES,
+  isGeminiTtsEngine,
   type StoryModel,
   type EffortLevel,
   type TtsEngine,
@@ -35,7 +36,7 @@ export function SettingsBar({
   onTtsEngineChange,
   onVoiceChange,
 }: SettingsBarProps) {
-  const voices = ttsEngine === "gemini" ? GEMINI_TTS_VOICES : ELEVENLABS_VOICES;
+  const voices = isGeminiTtsEngine(ttsEngine) ? GEMINI_TTS_VOICES : ELEVENLABS_VOICES;
 
   return (
     <div className="bg-paper border border-rule rounded-lg p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -75,8 +76,11 @@ export function SettingsBar({
           onChange={(e) => {
             const engine = e.target.value as TtsEngine;
             onTtsEngineChange(engine);
-            const newVoices =
-              engine === "gemini" ? GEMINI_TTS_VOICES : ELEVENLABS_VOICES;
+            // Keep the chosen voice when switching between Gemini variants (for A/B)
+            if (isGeminiTtsEngine(engine) && isGeminiTtsEngine(ttsEngine)) return;
+            const newVoices = isGeminiTtsEngine(engine)
+              ? GEMINI_TTS_VOICES
+              : ELEVENLABS_VOICES;
             onVoiceChange(newVoices[0].value);
           }}
           className={SELECT_CLASS}
