@@ -23,14 +23,17 @@ const VOCAL_TAGS: Record<string, string> = {
   laughs: "<laugh>",
   laugh: "<laugh>",
   laughing: "<laugh>",
+  laughter: "<laugh>",
   giggles: "<giggle>",
   giggle: "<giggle>",
   giggling: "<giggle>",
   chuckles: "<chuckle>",
   chuckle: "<chuckle>",
+  chuckling: "<chuckle>",
   sighs: "<sigh>",
   sigh: "<sigh>",
   sighing: "<sigh>",
+  exhales: "<exhales>",
   gasp: "<gasp>",
   gasps: "<gasp>",
   crying: "<cry>",
@@ -43,6 +46,7 @@ const VOCAL_TAGS: Record<string, string> = {
   coughs: "<cough>",
   cough: "<cough>",
   pause: "<short pause>",
+  pauses: "<short pause>",
   "short pause": "<short pause>",
   "long pause": "<long pause>",
 };
@@ -74,6 +78,8 @@ const STYLE_TAGS: Record<string, string> = {
   encouragement: "encouraging",
   // Whisper directives cause metallic artifacts in Gemini TTS - ask for a quiet voice instead
   whispers: "quiet and gentle",
+  whisper: "quiet and gentle",
+  whispering: "quiet and gentle",
   shouting: "loud and strong",
 };
 
@@ -165,9 +171,9 @@ function extractPcm(bytes: Buffer, mimeType = ""): Pcm {
 
 function styleForTag(tag: string): string | null {
   if (STYLE_TAGS[tag]) return STYLE_TAGS[tag];
-  // Unlisted one-word English tags (e.g. [nervously]) are usable as-is; anything
-  // else (sound effects, Hebrew) is dropped
-  return /^[a-z]{3,20}$/.test(tag) ? tag : null;
+  // Unlisted delivery adverbs ([nervously], [slowly]) are usable as-is; anything
+  // else (sound effects like [thunder], Hebrew) is dropped
+  return /^[a-z]{3,20}ly$/.test(tag) ? tag : null;
 }
 
 function tidy(text: string): string {
@@ -192,7 +198,7 @@ function parseParagraph(paragraph: string, expressive: boolean): Segment[] {
   };
 
   let last = 0;
-  for (const match of paragraph.matchAll(/\[([^\]\n]+)\]/g)) {
+  for (const match of paragraph.matchAll(/\[+([^[\]\n]+)\]+/g)) {
     text += paragraph.slice(last, match.index);
     last = match.index + match[0].length;
     const tag = match[1].trim().toLowerCase();
@@ -263,7 +269,13 @@ async function ttsOneChunk(model: string, parts: Part[], voiceName: string): Pro
     throw new Error("Gemini TTS returned mixed sample rates");
   }
 
-  return { data: Buffer.concat(audio.map((a) => a.data)), sampleRate: audio[0].sampleRate };
+  // A header-only WAV is a failed render - throw so the chunk is retried
+  const data = Buffer.concat(audio.map((a) => a.data));
+  if (data.length === 0) {
+    throw new Error("No audio data from Gemini TTS (empty WAV)");
+  }
+
+  return { data, sampleRate: audio[0].sampleRate };
 }
 
 export async function generateSpeechGemini(params: {
@@ -276,10 +288,15 @@ export async function generateSpeechGemini(params: {
 
   // Split into chunks to avoid quality degradation in long audio
   // Merge short paragraphs together until each chunk is 200-600 chars
+  // Paragraphs with nothing to speak ("* * *", a lone [tag]) are dropped so they
+  // can't form a chunk of their own and send an empty request
   const rawParagraphs = params.text
     .split(/\n\n+/)
     .map((p) => p.trim())
-    .filter((p) => p.length > 0);
+    .filter((p) => parseParagraph(p, false).length > 0);
+  if (rawParagraphs.length === 0) {
+    throw new Error("No speakable text for Gemini TTS");
+  }
 
   const chunks: string[][] = [];
   let current: string[] = [];
