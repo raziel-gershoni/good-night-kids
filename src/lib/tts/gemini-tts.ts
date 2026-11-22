@@ -2,12 +2,7 @@ import { ApiError, type Part } from "@google/genai";
 import { getGeminiClient } from "../gemini/client";
 import type { GeminiTtsEngine } from "../types";
 
-const TTS_MODELS: Record<GeminiTtsEngine, string> = {
-  gemini: "gemini-3.8-flash-tts",
-  "gemini-expressive": "gemini-3.8-flash-tts",
-  "gemini-lite": "gemini-3.8-flash-lite-tts",
-  "gemini-lite-expressive": "gemini-3.8-flash-lite-tts",
-};
+const TTS_MODEL = "gemini-3.8-flash-tts";
 
 const DEFAULT_SAMPLE_RATE = 24000;
 const CHUNK_GAP_SECONDS = 0.4;
@@ -244,11 +239,11 @@ function buildParts(paragraphs: string[], expressive: boolean): Part[] {
   return merged.map((s) => ({ text: s.text, speechMetadata: { style: s.style } }));
 }
 
-async function ttsOneChunk(model: string, parts: Part[], voiceName: string): Promise<Pcm> {
+async function ttsOneChunk(parts: Part[], voiceName: string): Promise<Pcm> {
   const ai = getGeminiClient();
 
   const response = await ai.models.generateContent({
-    model,
+    model: TTS_MODEL,
     contents: [{ role: "user", parts }],
     config: {
       responseModalities: ["AUDIO"],
@@ -283,7 +278,6 @@ export async function generateSpeechGemini(params: {
   voiceName: string;
   engine: GeminiTtsEngine;
 }): Promise<Buffer> {
-  const model = TTS_MODELS[params.engine];
   let expressive = params.engine.endsWith("-expressive");
 
   // Split into chunks to avoid quality degradation in long audio
@@ -314,7 +308,7 @@ export async function generateSpeechGemini(params: {
   if (current.length > 0) chunks.push(current);
 
   console.log(
-    `Gemini TTS (${model}${expressive ? ", expressive" : ""}): ${rawParagraphs.length} paragraphs → ${chunks.length} chunks`,
+    `Gemini TTS (${TTS_MODEL}${expressive ? ", expressive" : ""}): ${rawParagraphs.length} paragraphs → ${chunks.length} chunks`,
   );
 
   // Render each chunk sequentially with retry
@@ -327,7 +321,7 @@ export async function generateSpeechGemini(params: {
       const chars = parts.reduce((n, p) => n + (p.text?.length ?? 0), 0);
       console.log(`  Chunk ${i + 1}/${chunks.length} (${parts.length} parts, ${chars} chars)`);
       try {
-        pcm = await ttsOneChunk(model, parts, params.voiceName);
+        pcm = await ttsOneChunk(parts, params.voiceName);
         console.log(`  Chunk ${i + 1} → ${(pcm.data.length / 2 / pcm.sampleRate).toFixed(1)}s audio`);
       } catch (err) {
         // A rejected multi-style request falls back to one style for the rest of the story

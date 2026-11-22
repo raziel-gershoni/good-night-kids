@@ -1,6 +1,6 @@
 import { db } from "./index";
 import { stories, type NewStory } from "./schema";
-import { eq, desc, sql, isNotNull } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { generateSlug } from "../utils";
 
 export async function createStory(data: {

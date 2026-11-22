@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       ttsScript: body.ttsScript,
       audioData,
       audioMimeType: audioData ? "audio/mpeg" : undefined,
-      model: body.model || "claude-sonnet-4-6",
+      model: body.model || "claude-sonnet-5-5",
       thinkingLevel: body.effort || body.thinkingLevel,
       title: body.title,
       parashaRef: body.parashaRef,

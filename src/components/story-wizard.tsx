@@ -10,6 +10,7 @@ import { SavedStoriesList } from "./saved-stories-list";
 import { Button } from "./ui";
 import {
   DEFAULT_GEMINI_MODEL,
+  STORY_MODELS,
   type StoryModel,
   type EffortLevel,
   type TtsEngine,
@@ -242,7 +243,9 @@ export function StoryWizard() {
     setTtsScript(story.ttsScript || "");
     setCurrentStoryId(story.id);
     setCurrentSlug(story.slug);
-    setModel((story.model as StoryModel) || "claude-sonnet-4-6");
+    // Stories saved with a retired model fall back to the current default
+    const savedModel = STORY_MODELS.find((m) => m.value === story.model);
+    setModel(savedModel ? savedModel.value : DEFAULT_GEMINI_MODEL);
     setIsMixed(false);
     setAmbientBlob(null);
 

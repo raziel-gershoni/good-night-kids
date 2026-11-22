@@ -27,9 +27,12 @@ export async function POST(request: Request) {
 
     const client = getClaudeClient();
 
+    // Tiny task: thinking off (it would eat the 200-token budget) and low effort
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-5-5",
       max_tokens: 200,
+      thinking: { type: "disabled" },
+      output_config: { effort: "low" },
       system: PROMPT,
       messages: [
         {
@@ -45,6 +48,12 @@ export async function POST(request: Request) {
     }
 
     const ambientMatch = result.match(/אווירה:\s*(.+)/);
+    if (!ambientMatch) {
+      console.warn(
+        `Sound design: no ambient line (stop_reason: ${response.stop_reason}), using default. Output:`,
+        result,
+      );
+    }
     const ambient = ambientMatch?.[1]?.trim() || "soft piano lullaby with gentle night sounds";
 
     return NextResponse.json({ ambient, effects: "" });

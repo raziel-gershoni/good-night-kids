@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateStory } from "@/lib/claude/generate-story";
 import { generateStoryGemini } from "@/lib/gemini/generate-story";
-import type { GeminiModel, StoryModel } from "@/lib/types";
+import type { ClaudeModel, GeminiModel, StoryModel } from "@/lib/types";
 
 export const maxDuration = 300;
 
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const selectedModel: StoryModel = model || "claude-sonnet-4-6";
+    const selectedModel: StoryModel = model || "claude-sonnet-5-5";
     let childrenStory: string;
 
     if (isGeminiModel(selectedModel)) {
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       childrenStory = await generateStory({
         originalText,
         sourceType: sourceType || "other",
-        model: selectedModel as "claude-sonnet-4-6" | "claude-opus-4-7",
+        model: selectedModel as ClaudeModel,
         effort: effort || "high",
       });
     }

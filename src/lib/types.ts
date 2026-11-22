@@ -1,39 +1,26 @@
 export type SourceType = "tanakh" | "gmara" | "zohar" | "midrash" | "other";
 
-export type ClaudeModel = "claude-sonnet-4-6" | "claude-opus-4-7";
-export type GeminiModel =
-  | "gemini-3.8-flash"
-  | "gemini-3.1-flash-lite"
-  | "gemini-3.1-pro-preview";
+export type ClaudeModel = "claude-sonnet-5-5" | "claude-opus-5-5";
+export type GeminiModel = "gemini-4-hydrogen" | "gemini-4-neon";
 export type StoryModel = ClaudeModel | GeminiModel;
 
 export type EffortLevel = "low" | "medium" | "high" | "max";
 
-export const DEFAULT_GEMINI_MODEL: GeminiModel = "gemini-3.8-flash";
+export const DEFAULT_GEMINI_MODEL: GeminiModel = "gemini-4-hydrogen";
 
-// "-expressive" engines map [emotion] tags to per-segment speech styles (experimental).
-export type GeminiTtsEngine =
-  | "gemini"
-  | "gemini-expressive"
-  | "gemini-lite"
-  | "gemini-lite-expressive";
+// "gemini-expressive" maps [emotion] tags to per-segment speech styles (experimental).
+export type GeminiTtsEngine = "gemini" | "gemini-expressive";
 export type TtsEngine = "elevenlabs" | GeminiTtsEngine;
 
 export function isGeminiTtsEngine(engine: unknown): engine is GeminiTtsEngine {
-  return (
-    engine === "gemini" ||
-    engine === "gemini-expressive" ||
-    engine === "gemini-lite" ||
-    engine === "gemini-lite-expressive"
-  );
+  return engine === "gemini" || engine === "gemini-expressive";
 }
 
 export const STORY_MODELS: { value: StoryModel; label: string }[] = [
-  { value: "claude-sonnet-4-6", label: "Claude Sonnet 4.6" },
-  { value: "claude-opus-4-7", label: "Claude Opus 4.7" },
-  { value: "gemini-3.8-flash", label: "Gemini 3.8 Flash" },
-  { value: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash Lite" },
-  { value: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro" },
+  { value: "claude-sonnet-5-5", label: "Claude Sonnet 5.5" },
+  { value: "claude-opus-5-5", label: "Claude Opus 5.5" },
+  { value: "gemini-4-hydrogen", label: "Gemini 4 Hydrogen" },
+  { value: "gemini-4-neon", label: "Gemini 4 Neon" },
 ];
 
 export const EFFORT_LEVELS: { value: EffortLevel; label: string }[] = [
@@ -54,8 +41,6 @@ export const SOURCE_TYPES: { value: SourceType; label: string }[] = [
 export const TTS_ENGINES: { value: TtsEngine; label: string }[] = [
   { value: "gemini", label: "Gemini 3.8 Flash TTS" },
   { value: "gemini-expressive", label: "Gemini 3.8 Flash TTS · רגשי (ניסיוני)" },
-  { value: "gemini-lite", label: "Gemini 3.8 Flash-Lite TTS" },
-  { value: "gemini-lite-expressive", label: "Gemini 3.8 Flash-Lite TTS · רגשי (ניסיוני)" },
   { value: "elevenlabs", label: "ElevenLabs" },
 ];
 
