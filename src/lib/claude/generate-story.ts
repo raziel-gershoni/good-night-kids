@@ -16,9 +16,7 @@ export async function generateStory(params: {
   const client = getClaudeClient();
   const sourceLabel = SOURCE_LABELS[params.sourceType] || SOURCE_LABELS.other;
 
-  const request: Anthropic.Beta.MessageCreateParamsNonStreaming & {
-    fallbacks: "default";
-  } = {
+  const request: Anthropic.Beta.MessageCreateParamsNonStreaming = {
     model: params.model,
     max_tokens: 16000,
     thinking: { type: "adaptive" },
