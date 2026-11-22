@@ -63,9 +63,11 @@ export function ParashaWizard() {
 
   const parasha = parashaId ? findParashaById(parashaId) : null;
 
-  useEffect(() => {
-    if (!parashaId) return;
-    let cancelled = false;
+  // Reset the downstream steps in the same render as the selection; the effect below only fetches
+  const selectParasha = (id: string) => {
+    if (id === parashaId) return;
+    setParashaId(id);
+    if (!id) return;
     clearError();
     setIsLoadingText(true);
     setParashaText("");
@@ -76,6 +78,11 @@ export function ParashaWizard() {
     setAudioUrl(null);
     setAudioBase64(null);
     setSavedSlug(null);
+  };
+
+  useEffect(() => {
+    if (!parashaId) return;
+    let cancelled = false;
     (async () => {
       try {
         const res = await fetch(
@@ -294,7 +301,7 @@ export function ParashaWizard() {
 
       {/* Step 1 */}
       <Section step={1} title="פרשה" description="בחרו פרשה — ברירת המחדל היא פרשת השבוע">
-        <ParashaPicker selectedId={parashaId} onSelect={setParashaId} />
+        <ParashaPicker selectedId={parashaId} onSelect={selectParasha} />
         {parashaId && (
           <div className="mt-2 text-xs text-ink-subtle tabular-nums" dir="ltr">
             {isLoadingText

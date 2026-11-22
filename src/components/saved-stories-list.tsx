@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import type { SavedStory } from "@/lib/types";
 
 interface SavedStoriesListProps {
@@ -19,23 +19,25 @@ export function SavedStoriesList({ onLoad }: SavedStoriesListProps) {
   const [stories, setStories] = useState<SavedStory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchStories = useCallback(async () => {
-    try {
-      const res = await fetch("/api/stories");
-      if (res.ok) {
-        const data = await res.json();
-        setStories(data.stories);
-      }
-    } catch {
-      /* silent for POC */
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchStories();
-  }, [fetchStories]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/stories");
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) setStories(data.stories);
+        }
+      } catch (e) {
+        console.error("[saved-stories] failed to load stories", e);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleDelete(id: string) {
     try {

@@ -18,6 +18,9 @@ export function EditablePrompt({
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
+    // Syncing from localStorage after hydration: the flag must flip in the same
+    // render as onChange(stored), or the "modified" badge flashes for a frame
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHasMounted(true);
     try {
       const stored = window.localStorage.getItem(storageKey);
